@@ -234,5 +234,6 @@
   services.emacs.install = true;
   services.emacs.enable = true;
   services.emacs.defaultEditor = true;
+  boot.plymouth.enable = true;
   system.stateVersion = "19.09"; # Did you read the comment?
 }
