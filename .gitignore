@@ -1,0 +1,11 @@
+# Never track secrets. The real secrets live OUTSIDE this repo, on the encrypted
+# persistent dataset (/persist/secrets/*.hash, /persist/etc/NetworkManager/...),
+# but guard against accidents anyway:
+*.hash
+secrets/
+*.nmconnection
+*.key
+*.pem
+id_*
+result
+result-*
