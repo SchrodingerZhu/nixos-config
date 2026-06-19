@@ -1,12 +1,13 @@
-# KeePassXC as BOTH the secret store and the SSH agent.
+# KeePassXC as the secret store + SSH key manager.
 #
-# It binds a stable agent socket at ~/.ssh/agent.socket (KeePassXC creates the
-# socket named by $SSH_AUTH_SOCK when "use SSH_AUTH_SOCK env variable" is on),
-# and $SSH_AUTH_SOCK points there globally (set here + reinforced for fish in
-# ssh.nix). Competing agents are disabled in ssh.nix / host default.nix.
+# IMPORTANT: KeePassXC (2.7.x) is an SSH-agent *client*, not a standalone agent.
+# It does NOT create a socket server — it attaches to the agent at $SSH_AUTH_SOCK
+# (or SSHAgent/AuthSockOverride) and ADDS the database's SSH keys to it when the
+# database is unlocked. So the actual agent is a single plain ssh-agent bound to
+# ~/.ssh/agent.socket (see ssh.nix); KeePassXC populates it.
 #
-# The KeePassXC database itself lives under ~/ (in /home, persistent) and so
-# survives the ephemeral-root wipe.
+# The KeePassXC database lives under ~/ (in /home, persistent), so it survives
+# the ephemeral-root wipe.
 { config, pkgs, lib, ... }:
 {
   home.packages = [ pkgs.keepassxc ];
@@ -14,9 +15,13 @@
   # Stable agent socket consumed by ssh and every app that reads SSH_AUTH_SOCK.
   home.sessionVariables.SSH_AUTH_SOCK = "${config.home.homeDirectory}/.ssh/agent.socket";
 
-  # Seed keepassxc.ini with the SSH-agent settings on first run only. We seed
-  # (rather than symlink a read-only store file) so KeePassXC can still persist
-  # its own runtime state into the same INI without being reset.
+  # Seed keepassxc.ini on first run only (mutable afterwards, so KeePassXC can
+  # persist its own runtime state into the same file). Keys verified against
+  # KeePassXC 2.7.12's src/core/Config.cpp:
+  #   SSHAgent/Enabled, SSHAgent/AuthSockOverride, Security/IconDownloadFallback,
+  #   GUI/MinimizeToTray, GUI/MinimizeOnClose, GUI/ShowTrayIcon.
+  # (There is NO "UseSSHAgentEnvVariable" key — KeePassXC just uses the override
+  # path or $SSH_AUTH_SOCK directly.)
   home.activation.seedKeepassxcIni = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     run mkdir -p "${config.home.homeDirectory}/.ssh"
     run chmod 700 "${config.home.homeDirectory}/.ssh"
@@ -26,15 +31,15 @@
       run cat > "$cfg" <<'EOF'
 [SSHAgent]
 Enabled=true
-UseSSHAgentEnvVariable=true
+AuthSockOverride=${config.home.homeDirectory}/.ssh/agent.socket
 
 [Security]
 IconDownloadFallback=false
 
 [GUI]
 MinimizeToTray=true
-ShowTrayIcon=true
 MinimizeOnClose=true
+ShowTrayIcon=true
 EOF
     fi
   '';
