@@ -20,25 +20,24 @@
           "-r"
         ];
       } # CJK input method
-      # XWayland support: xwayland-satellite runs a rootless Xwayland on a fixed
-      # display (:12) that niri proxies. We pin the display + export DISPLAY below
-      # so X11 apps started anywhere in the session find it (standalone mode —
-      # robust across niri versions, no reliance on niri auto-managing DISPLAY).
-      # Package comes from niri-flake's overlay, matched to niri-unstable.
-      {
-        command = [
-          "${pkgs.xwayland-satellite-unstable}/bin/xwayland-satellite"
-          ":12"
-        ];
-      }
     ];
+
+    # XWayland via niri's built-in xwayland-satellite integration: niri spawns
+    # and supervises the satellite, assigns the DISPLAY, and propagates it to
+    # spawned children AND the systemd-user / D-Bus activation environment. That
+    # is what the old manual `spawn-at-startup` + `environment.DISPLAY = ":12"`
+    # approach could NOT do (it only reached niri's direct children), which is
+    # why DISPLAY wasn't set automatically. Needs unstable niri + unstable
+    # xwayland-satellite (both from niri-flake).
+    xwayland-satellite = {
+      enable = true;
+      path = pkgs.lib.getExe pkgs.xwayland-satellite-unstable;
+    };
 
     environment = {
       # Hint toolkits toward the Wayland/fcitx5 path.
       QT_QPA_PLATFORM = "wayland";
       GDK_BACKEND = "wayland";
-      # X11 apps (incl. anything XWayland-only) talk to xwayland-satellite above.
-      DISPLAY = ":12";
     };
 
     binds = with config.lib.niri.actions; {

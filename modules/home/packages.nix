@@ -19,5 +19,7 @@
     gh # GitHub CLI
     obs-studio # screen capture via the gnome ScreenCast portal (see xdg.portal)
     taterclient-ddnet # DDNet client
+    telegram-desktop
+    vesktop # Discord client (better Wayland/screenshare support than official)
   ];
 }
