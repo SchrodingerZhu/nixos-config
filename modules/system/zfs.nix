@@ -11,9 +11,10 @@
   # Prompt for the native-encryption passphrase at boot (systemd initrd unit).
   boot.zfs.requestEncryptionCredentials = true;
 
-  # Recommended (new default from 26.11): don't force-import a pool that wasn't
-  # cleanly exported — reduces the risk of data loss on a stripe with no redundancy.
-  boot.zfs.forceImportRoot = false;
+  # Force-import the root pool even when last-accessed-by hostid doesn't match.
+  # Safety net for hostid drift (e.g. booting a LiveCD between sessions); on a
+  # single-host workstation the multi-host concurrent-access risk does not apply.
+  boot.zfs.forceImportRoot = true;
 
   # Periodic maintenance, scheduled on DIFFERENT days so the NVMes are never
   # scrubbed and trimmed at the same time.

@@ -60,10 +60,45 @@
   services.displayManager.dms-greeter = {
     enable = true;
     compositor.name = "niri";
+
+    # The greeter's DEFAULT generated niri config emits a `debug {
+    # keep-max-bpc-unchanged }` node that niri-unstable (our package) rejects,
+    # which crash-loops greetd and drops you into a broken bare compositor with
+    # no login UI. Supplying our own config makes the greeter asset take its
+    # custom-config branch (which omits that node); it still appends the
+    # quickshell-greeter spawn line itself. This is upstream's default config
+    # verbatim, minus the offending debug block.
+    compositor.customConfig = ''
+      hotkey-overlay {
+          skip-at-startup
+      }
+
+      environment {
+          DMS_RUN_GREETER "1"
+      }
+
+      gestures {
+         hot-corners {
+           off
+         }
+      }
+
+      layout {
+        background-color "#000000"
+      }
+    '';
   };
 
   # Use DMS's built-in polkit agent; disable niri-flake's to avoid a conflict.
   systemd.user.services.niri-flake-polkit.enable = false;
+
+  # niri-flake unconditionally sets `services.gnome.gnome-keyring.enable = true`
+  # whenever `programs.niri.enable` is on. We use KeePassXC as the secret store
+  # and SSH agent, so force the whole thing off. Disabling this one option drops:
+  # the gnome-keyring package, its org.freedesktop.secrets / org.gnome.keyring
+  # D-Bus services, the Secret xdg-portal, the cap_ipc_lock setcap wrapper, and
+  # the PAM `login` hook that spawns `gnome-keyring-daemon --login` at session start.
+  services.gnome.gnome-keyring.enable = lib.mkForce false;
 
   # --- AMD iGPU (RDNA2) graphics + Wayland portals ---
   hardware.graphics = {
@@ -72,8 +107,19 @@
   };
   xdg.portal = {
     enable = true;
-    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
-    config.common.default = [ "gtk" ];
+    # gtk: file chooser, settings, app-chooser.
+    # gnome: ScreenCast + Screenshot (PipeWire) — required for screen capture
+    # under niri (e.g. OBS). niri-flake also pulls in xdg-desktop-portal-gnome;
+    # it is listed explicitly here so the routing below is self-contained.
+    extraPortals = [
+      pkgs.xdg-desktop-portal-gtk
+      pkgs.xdg-desktop-portal-gnome
+    ];
+    config.common = {
+      default = [ "gtk" ];
+      "org.freedesktop.impl.portal.ScreenCast" = [ "gnome" ];
+      "org.freedesktop.impl.portal.Screenshot" = [ "gnome" ];
+    };
   };
 
   # --- Audio: PipeWire ---
@@ -89,6 +135,15 @@
   # --- Bluetooth (nice-to-have on a workstation) ---
   hardware.bluetooth.enable = true;
 
+  # --- Steam (system module: FHS env, controller udev rules, 32-bit libs) ---
+  # Bare pkgs.steam in home.packages would miss this integration. The game
+  # library lives in ~/.local/share/Steam (safe/home dataset) -> persists.
+  programs.steam.enable = true;
+
+  # --- Containers: rootless podman as the distrobox backend ---
+  # Images/containers go to ~/.local/share/containers (safe/home) -> persist.
+  virtualisation.podman.enable = true;
+
   # --- Users (passwords set interactively into /persist/secrets — see install notes) ---
   programs.fish.enable = true; # system-level: registered login shell
   programs.ssh.startAgent = false; # KeePassXC is the SSH agent
@@ -101,6 +156,9 @@
     extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
     shell = pkgs.fish;
     hashedPasswordFile = "/persist/secrets/schrodingerzy.hash";
+    # Rootless podman (distrobox) needs sub-uid/gid mappings; required here
+    # because mutableUsers = false means they aren't allocated otherwise.
+    autoSubUidGidRange = true;
   };
 
   # --- home-manager ---

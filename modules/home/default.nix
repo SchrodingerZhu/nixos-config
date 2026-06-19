@@ -13,6 +13,7 @@
     ./niri.nix
     ./dms.nix
     ./wezterm.nix
+    ./packages.nix
     ./shell.nix
     ./browser.nix
     ./vicinae.nix

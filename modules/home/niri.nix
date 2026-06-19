@@ -20,12 +20,25 @@
           "-r"
         ];
       } # CJK input method
+      # XWayland support: xwayland-satellite runs a rootless Xwayland on a fixed
+      # display (:12) that niri proxies. We pin the display + export DISPLAY below
+      # so X11 apps started anywhere in the session find it (standalone mode —
+      # robust across niri versions, no reliance on niri auto-managing DISPLAY).
+      # Package comes from niri-flake's overlay, matched to niri-unstable.
+      {
+        command = [
+          "${pkgs.xwayland-satellite-unstable}/bin/xwayland-satellite"
+          ":12"
+        ];
+      }
     ];
 
     environment = {
       # Hint toolkits toward the Wayland/fcitx5 path.
       QT_QPA_PLATFORM = "wayland";
       GDK_BACKEND = "wayland";
+      # X11 apps (incl. anything XWayland-only) talk to xwayland-satellite above.
+      DISPLAY = ":12";
     };
 
     binds = with config.lib.niri.actions; {
