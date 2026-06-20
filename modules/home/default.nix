@@ -15,6 +15,7 @@
     ./wezterm.nix
     ./packages.nix
     ./shell.nix
+    ./direnv.nix
     ./browser.nix
     ./vicinae.nix
     ./keepassxc.nix
