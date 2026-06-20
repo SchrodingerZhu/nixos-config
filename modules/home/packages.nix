@@ -21,5 +21,11 @@
     taterclient-ddnet # DDNet client
     telegram-desktop
     vesktop # Discord client (better Wayland/screenshare support than official)
+
+    # System monitors
+    fastfetch
+    btop
+    htop
+    nvtopPackages.amd # AMD RDNA2 iGPU only (no NVIDIA); use .full for all vendors
   ];
 }

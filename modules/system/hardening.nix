@@ -36,4 +36,12 @@
     enableCache = true;
   };
   environment.systemPackages = [ pkgs.apparmor-utils ]; # aa-status
+
+  # --- pkexec: create the setuid-root wrapper (/run/wrappers/bin/pkexec) ---
+  # polkit ships pkexec, but NixOS leaves the setuid wrapper OPT-IN (default
+  # off), so without this pkexec fails with "must be setuid root". Tradeoff:
+  # pkexec has a CVE history (e.g. PwnKit, CVE-2021-4034); the DMS polkit agent
+  # already covers app-initiated prompts, so this is only needed to run commands
+  # as root yourself via pkexec.
+  security.polkit.enablePkexecWrapper = true;
 }
