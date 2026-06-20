@@ -55,6 +55,16 @@
       "Mod+Shift+F".action = fullscreen-window;
       "Mod+W".action = toggle-column-tabbed-display;
 
+      # Resize (runtime finetuning of window/column sizes)
+      "Mod+R".action = switch-preset-column-width;
+      "Mod+Shift+R".action = switch-preset-window-height;
+      "Mod+Ctrl+R".action = reset-window-height;
+      "Mod+Ctrl+F".action = expand-column-to-available-width;
+      "Mod+Minus".action = set-column-width "-10%";
+      "Mod+Equal".action = set-column-width "+10%";
+      "Mod+Shift+Minus".action = set-window-height "-10%";
+      "Mod+Shift+Equal".action = set-window-height "+10%";
+
       # Focus
       "Mod+Left".action = focus-column-left;
       "Mod+Right".action = focus-column-right;
