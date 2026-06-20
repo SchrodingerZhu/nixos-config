@@ -37,6 +37,15 @@
   };
   environment.systemPackages = [ pkgs.apparmor-utils ]; # aa-status
 
+  # --- U2F (pam_u2f): enable the module + require it for login and sudo ---
+  # control defaults to "sufficient", so a registered key OR the password works
+  # (no lockout). Keys are read from ~/.config/Yubico/u2f_keys.
+  security.pam.u2f.enable = true;
+  security.pam.services = {
+    login.u2fAuth = true;
+    sudo.u2fAuth = true;
+  };
+
   # --- pkexec: create the setuid-root wrapper (/run/wrappers/bin/pkexec) ---
   # polkit ships pkexec, but NixOS leaves the setuid wrapper OPT-IN (default
   # off), so without this pkexec fails with "must be setuid root". Tradeoff:
