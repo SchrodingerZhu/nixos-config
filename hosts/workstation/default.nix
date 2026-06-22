@@ -22,6 +22,7 @@
     ../../modules/system/fonts.nix
     ../../modules/system/hardening.nix
     ../../modules/system/network.nix
+    ../../modules/system/vpn.nix
     ../../modules/system/zrepl.nix
   ];
 
