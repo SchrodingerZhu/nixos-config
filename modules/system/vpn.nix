@@ -30,20 +30,38 @@ let
   address = "10.2.0.2/32";
   protonDns = "10.2.0.1";
 
-  scTable = 200;
-  markSc = 28528; # dst in sc set     -> secure-core
-  markScWrap = 28529; # sc's encrypted pkts -> physical link
+  # We do NOT let wg-quick auto-install its full-tunnel ip-rules: it picks
+  # non-deterministic priorities (seen at 0 and at 2/3 across boots) and orders
+  # its catch-all BEFORE its own suppress rule, which swallows LAN + our marked
+  # traffic into the tunnel. Instead each interface gets an explicit `table`, and
+  # we own every ip-rule below with fixed priorities.
+  protonTable = 100; # default tunnel's default route lives here
+  scTable = 200; # secure-core's default route lives here
+
+  markProtonWrap = 28527; # proton's encrypted pkts -> physical link
+  markSc = 28528; # dst in sc set        -> secure-core
+  markScWrap = 28529; # sc's encrypted pkts  -> physical link
+  markDirect = 28530; # group `novpn`        -> direct (physical link, no VPN)
+
+  bypassGroup = "novpn";
+  gidNovpn = 3300; # pinned so nftables can match by numeric gid
 in
 {
   # asymmetric replies from the policy-routed secure-core tunnel need loose rpf
   networking.firewall.checkReversePath = "loose";
 
+  # wg-quick uses fwmark to keep an interface's OWN encrypted packets out of the
+  # tunnel; with an explicit `table` it won't set that up, so we set the fwmark in
+  # postUp and route those marks to the physical link ourselves (rules below).
   networking.wg-quick.interfaces = {
-    # DEFAULT EXIT: US-CA (p2p config), full tunnel, catch-all.
+    # DEFAULT EXIT: US-CA (p2p config). table=100 => routes go in table 100 only;
+    # we send unmarked traffic there via a low-priority rule below.
     proton = {
       autostart = true;
       address = [ address ];
       privateKeyFile = "/persist/secrets/proton.key";
+      table = toString protonTable;
+      postUp = "${wg} set proton fwmark ${toString markProtonWrap}";
       peers = [
         {
           publicKey = "JtPZzImfe+HtDLTEPxsHLbOusQJfOwLyOYjNixNY0k8=";
@@ -97,33 +115,60 @@ in
 
         ip  daddr @sc_v4 meta mark set ${toString markSc}
         ip6 daddr @sc_v6 meta mark set ${toString markSc}
+
+        # Apps in the `novpn` group go DIRECT -- last, so it overrides the above.
+        meta skgid ${toString gidNovpn} meta mark set ${toString markDirect}
+      }
+
+      chain srcnat {
+        type nat hook postrouting priority srcnat; policy accept;
+        # Direct (novpn) sockets get the tunnel's source IP (10.2.0.2) chosen at
+        # connect-time, BEFORE the mark reroutes them to the physical link -- so
+        # they'd leave with a martian source and get dropped (UDP/IPv4 especially;
+        # TCP slipped by over IPv6). Masquerade to the real physical IP; conntrack
+        # restores the reply. v6 already gets a real source, so v4 only.
+        meta nfproto ipv4 meta mark ${toString markDirect} masquerade
       }
     '';
   };
 
-  # ---- policy-routing rules (boot oneshot; harmless when sc is down) ---------
+  # wg routing needs this so fwmark-routed encrypted packets aren't dropped by
+  # source-address validation (wg-quick sets it in auto mode; we set it manually).
+  boot.kernel.sysctl."net.ipv4.conf.all.src_valid_mark" = 1;
+
+  # ---- policy-routing rules: WE own the whole rule table now -----------------
+  # Ordered by priority (lower = first). The default route lives in table 100
+  # (proton) / 200 (sc); the physical default stays in `main`.
+  #   100-103  marked traffic -> its exit (encrypted pkts + direct -> physical)
+  #   150      `main` minus its default -> keeps LAN/link routes (e.g. ssh spark)
+  #   200      everything else (unmarked) -> proton tunnel (table 100)
   systemd.services.vpn-split-route = {
-    description = "Policy-routing rules for the secure-core split tunnel";
+    description = "Policy-routing rules for the VPN split tunnels";
     wantedBy = [ "multi-user.target" ];
     after = [ "network-pre.target" ];
+    # re-apply if wg interfaces restart (their tables/fwmarks are prerequisites)
+    partOf = [ "wg-quick-proton.service" ];
+    wants = [ "wg-quick-proton.service" ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
     };
     path = [ pkgs.iproute2 ];
-    # priorities sit ABOVE wg-quick's catch-all rules (~32764)
     script = ''
-      add() { ip $1 rule add fwmark $2 table $3 priority $4 2>/dev/null || true; }
-      for fam in "-4" "-6"; do
-        add "$fam" ${toString markScWrap} main             4   # sc encrypted pkts -> physical
-        add "$fam" ${toString markSc}     ${toString scTable}  6   # sensitive sites  -> secure-core
+      r() { ip $1 rule add $2 priority $3 2>/dev/null || true; }
+      for f in "-4" "-6"; do
+        r "$f" "fwmark ${toString markProtonWrap} table main"          100  # proton enc -> phys
+        r "$f" "fwmark ${toString markScWrap}     table main"          101  # sc enc     -> phys
+        r "$f" "fwmark ${toString markDirect}     table main"          102  # novpn apps -> direct
+        r "$f" "fwmark ${toString markSc}         table ${toString scTable}" 103  # sensitive -> sc
+        r "$f" "table main suppress_prefixlength 0"                    150  # LAN/link routes
+        r "$f" "table ${toString protonTable}"                        200  # default -> proton
       done
     '';
     preStop = ''
-      del() { ip $1 rule del fwmark $2 table $3 priority $4 2>/dev/null || true; }
-      for fam in "-4" "-6"; do
-        del "$fam" ${toString markScWrap} main             4
-        del "$fam" ${toString markSc}     ${toString scTable}  6
+      d() { ip $1 rule del priority $2 2>/dev/null || true; }
+      for f in "-4" "-6"; do
+        for p in 100 101 102 103 150 200; do d "$f" "$p"; done
       done
     '';
   };
@@ -145,8 +190,16 @@ in
     "CAP_NET_BIND_SERVICE"
   ];
 
-  # ---- status helper ----  `sudo vpn status`
+  # ---- direct (VPN-bypass) group + membership --------------------------------
+  # Sockets created under group `novpn` are marked (see the nft chain) and routed
+  # out the physical link. NOTE: log out/in after the first rebuild so your shell
+  # picks up the new group membership.
+  users.groups.${bypassGroup}.gid = gidNovpn;
+  users.users.schrodingerzy.extraGroups = [ bypassGroup ];
+
+  # ---- helpers + launchers ---------------------------------------------------
   environment.systemPackages = [
+    # `sudo vpn status`
     (pkgs.writeShellScriptBin "vpn" ''
       ip="${pkgs.iproute2}/bin/ip"
       nft="${pkgs.nftables}/bin/nft"
@@ -158,6 +211,14 @@ in
           echo "--- nft sc_v4 set ---"; $nft list set inet split-tunnel sc_v4 ;;
         *) echo "usage: vpn status   (run with sudo)" ;;
       esac
+    '')
+
+    # `direct CMD…` -- run any one-off command outside the VPN. Per-app forcing
+    # is done by wrapping the package itself (see modules/home/packages.nix).
+    # `sg` keeps your uid + supplementary groups; GPU/audio access is by logind
+    # seat ACL, not group, so it is unaffected.
+    (pkgs.writeShellScriptBin "direct" ''
+      exec sg ${bypassGroup} -c "$*"
     '')
   ];
 }
