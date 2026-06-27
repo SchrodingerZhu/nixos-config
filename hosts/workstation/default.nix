@@ -49,6 +49,7 @@
         qt6Packages.fcitx5-chinese-addons
         fcitx5-gtk
         qt6Packages.fcitx5-configtool
+        fcitx5-rime # Rime engine (configure schemas in ~/.local/share/fcitx5/rime)
       ];
     };
   };
