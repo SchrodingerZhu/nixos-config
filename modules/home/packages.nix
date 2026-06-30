@@ -47,6 +47,7 @@ in
     obs-studio # screen capture via the gnome ScreenCast portal (see xdg.portal)
     (directWrap taterclient-ddnet "TaterClient-DDNet") # DDNet — forced DIRECT (UDP breaks via VPN)
     telegram-desktop
+    sone # native Linux desktop client for TIDAL
     (directWrap vesktop "vesktop") # Discord — forced DIRECT (voice breaks via VPN)
 
     # System monitors
