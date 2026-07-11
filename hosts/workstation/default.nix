@@ -31,6 +31,20 @@
     inputs.nix-cachyos-kernel.overlays.pinned
     inputs.niri.overlays.niri
     inputs.vicinae.overlays.default
+    # click-threading (khal -> vdirsyncer): pytest collects docs/conf.py which
+    # imports the removed pkg_resources. Mirrors nixpkgs 1cb613d (2026-07-09);
+    # drop once the flake pin includes it.
+    (final: prev: {
+      pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+        (pyfinal: pyprev: {
+          click-threading = pyprev.click-threading.overridePythonAttrs (old: {
+            preCheck = (old.preCheck or "") + ''
+              rm -rf docs
+            '';
+          });
+        })
+      ];
+    })
   ];
 
   # --- Identity / locale / time ---
