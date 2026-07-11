@@ -58,5 +58,6 @@ in
 
     # Dev tools (direnv itself is configured in direnv.nix)
     jetbrains.rust-rover
+    texliveFull # full TeX Live (all packages) — several GB
   ];
 }
