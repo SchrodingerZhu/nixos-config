@@ -164,12 +164,28 @@ in
         r "$f" "table main suppress_prefixlength 0"                    150  # LAN/link routes
         r "$f" "table ${toString protonTable}"                        200  # default -> proton
       done
+
+      # Proton WireGuard is IPv4-only: the interfaces get no inet6 address, yet
+      # wg-quick still routes ::/0 into the tunnel (from allowedIPs). On a LAN
+      # that offers IPv6, apps that try IPv6 first (browsers / happy-eyeballs)
+      # send their first connection into the v4-only tunnel, where it has no
+      # source address and is silently dropped -- no reset comes back, so the app
+      # hangs until it times out and only then falls back to v4 ("works after a
+      # while" / "can't connect unless I go direct"). Blackhole internet IPv6 in
+      # the VPN tables (metric 1 beats wg-quick's dev-<if> default at 1024) so a
+      # v6 connect returns ENETUNREACH IMMEDIATELY -> instant v4 fallback through
+      # the tunnel, and no v6 ever leaks past the VPN. LAN/link IPv6 is untouched:
+      # it still resolves via the priority-150 suppress_prefixlength rule.
+      ip -6 route replace blackhole default table ${toString protonTable} metric 1
+      ip -6 route replace blackhole default table ${toString scTable} metric 1
     '';
     preStop = ''
       d() { ip $1 rule del priority $2 2>/dev/null || true; }
       for f in "-4" "-6"; do
         for p in 100 101 102 103 150 200; do d "$f" "$p"; done
       done
+      ip -6 route del blackhole default table ${toString protonTable} metric 1 2>/dev/null || true
+      ip -6 route del blackhole default table ${toString scTable} metric 1 2>/dev/null || true
     '';
   };
 
