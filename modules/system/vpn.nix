@@ -215,17 +215,28 @@ in
 
   # ---- helpers + launchers ---------------------------------------------------
   environment.systemPackages = [
-    # `sudo vpn status`
+    # `sudo vpn status` / `sudo vpn restart`
     (pkgs.writeShellScriptBin "vpn" ''
       ip="${pkgs.iproute2}/bin/ip"
       nft="${pkgs.nftables}/bin/nft"
+      systemctl="${pkgs.systemd}/bin/systemctl"
       case "''${1:-status}" in
         status)
           ${wg} show
           echo "--- ip rule ---"; $ip rule
           echo "--- secure-core table (${toString scTable}) ---"; $ip route show table ${toString scTable}
           echo "--- nft sc_v4 set ---"; $nft list set inet split-tunnel sc_v4 ;;
-        *) echo "usage: vpn status   (run with sudo)" ;;
+        restart)
+          # One-shot recovery when the tunnels wedge: bounce both wg-quick
+          # interfaces (this re-runs their postUp fwmark setup), then re-apply the
+          # policy-routing rules + IPv6 blackhole. dnsmasq is restarted last so it
+          # re-establishes its forwarder over the freshly-rebuilt default tunnel.
+          echo ">> restarting proton tunnels + routing…"
+          $systemctl restart wg-quick-proton.service wg-quick-proton-sc.service
+          $systemctl restart vpn-split-route.service
+          $systemctl restart dnsmasq.service
+          echo ">> done. handshakes:"; ${wg} show all latest-handshakes ;;
+        *) echo "usage: vpn {status|restart}   (run with sudo)" ;;
       esac
     '')
 
