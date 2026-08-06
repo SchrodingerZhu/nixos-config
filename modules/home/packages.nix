@@ -42,6 +42,7 @@ in
     python3
     distrobox
     claude-code
+    codex
     vscode # Insiders isn't packaged in nixpkgs; using stable.
     gh # GitHub CLI
     obs-studio # screen capture via the gnome ScreenCast portal (see xdg.portal)
