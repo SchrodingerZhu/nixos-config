@@ -23,6 +23,7 @@
     telegram-desktop
     sone # native Linux desktop client for TIDAL
     vesktop # Discord Wayland-native client
+    teams-for-linux # Microsoft Teams (official Linux client is discontinued)
 
     # System monitors
     fastfetch
