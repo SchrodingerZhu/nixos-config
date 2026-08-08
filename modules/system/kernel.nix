@@ -1,11 +1,12 @@
 # CachyOS kernel via the overlay (overlay added in flake.nix) + matched ZFS.
 #
-# Plain "latest" line, Clang+ThinLTO, znver4 (EEVDF default scheduler) -- NOT
-# any -bore/-rt/-hardened/-lts/etc. variant. Attr verified to exist & evaluate
-# (kernel 7.1.0) via `nix eval` of the release branch overlay.
+# Plain "latest" line, Clang+ThinLTO, x86_64-v4 (generic AVX-512 baseline that
+# runs on Strix Halo / Zen 5 -- the overlay has no znver5-tuned variant yet,
+# and the znver4-tuned build would be a strict subset of what Zen 5 supports).
+# Attr verified to exist in the pinned release branch (kernel 7.1.0).
 { config, pkgs, ... }:
 {
-  boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest-lto-zen4;
+  boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest-lto-x86_64-v4;
 
   # ZFS from the CachyOS overlay, version-matched to this kernel (ZFS 2.4.3).
   # NOT the plain nixpkgs zfs/zfs_unstable. Fallback order if it won't build:

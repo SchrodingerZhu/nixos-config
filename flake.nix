@@ -1,5 +1,5 @@
 {
-  description = "schrodingerzy — AMD Ryzen 9 9950X NixOS workstation (ZFS stripe, ephemeral root, niri + DMS)";
+  description = "manifold — ASUS ROG Flow Z13 (GZ302EA, Strix Halo) NixOS laptop (ZFS single-disk, ephemeral root, niri + DMS)";
 
   inputs = {
     # Track nixos-unstable throughout.
@@ -45,10 +45,21 @@
   outputs =
     inputs@{ self, nixpkgs, ... }:
     {
-      nixosConfigurations.schrodingerzy = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = { inherit inputs; };
-        modules = [ ./hosts/workstation/default.nix ];
+      nixosConfigurations = {
+        # Workstation (master branch primary): AMD 9950X, ZFS stripe.
+        # Kept in the flake so cross-branch merges don't break eval on either host.
+        schrodingerzy = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = { inherit inputs; };
+          modules = [ ./hosts/workstation/default.nix ];
+        };
+
+        # Laptop (this branch's primary): ASUS ROG Flow Z13 (GZ302EA, Strix Halo).
+        manifold = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = { inherit inputs; };
+          modules = [ ./hosts/laptop/default.nix ];
+        };
       };
     };
 }

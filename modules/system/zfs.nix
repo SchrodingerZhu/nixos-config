@@ -4,7 +4,7 @@
 { ... }:
 {
   # Unique host id required by ZFS (generated for this machine).
-  networking.hostId = "d7d9d8b0";
+  networking.hostId = "84502e96";
 
   boot.supportedFilesystems.zfs = true;
 
