@@ -20,6 +20,10 @@
   # --- Battery / performance policy ----------------------------------------
   services.power-profiles-daemon.enable = true;
 
+  # UPower: battery stats over D-Bus. PPD only does perf profiles; DMS's
+  # battery widget needs the UPower daemon to see the battery at all.
+  services.upower.enable = true;
+
   # --- Sensors: accelerometer (auto-rotate) + ALS (auto-brightness) --------
   hardware.sensor.iio.enable = true;
 
