@@ -40,6 +40,24 @@
       GDK_BACKEND = "wayland";
     };
 
+    # Lid switch: DPMS-blank ALL monitors (incl. external) on close, wake them
+    # on open. On battery logind still suspends (laptop.nix HandleLidSwitch);
+    # this matters on AC/docked where logind ignores the lid.
+    switch-events = {
+      lid-close.action.spawn = [
+        "niri"
+        "msg"
+        "action"
+        "power-off-monitors"
+      ];
+      lid-open.action.spawn = [
+        "niri"
+        "msg"
+        "action"
+        "power-on-monitors"
+      ];
+    };
+
     binds = with config.lib.niri.actions; {
       # ---- REQUIRED: vicinae launcher on Mod+Space ----
       "Mod+Space".action = spawn "vicinae" "vicinae://toggle";
