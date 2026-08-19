@@ -3,8 +3,9 @@
 # (config.boot.kernelPackages.zfs_cachyos) in modules/system/kernel.nix.
 { ... }:
 {
-  # Unique host id required by ZFS (generated for this machine).
-  networking.hostId = "84502e96";
+  # NOTE: networking.hostId is HOST-SPECIFIC (ZFS uses it as the pool's
+  # last-imported owner id) and is set per host in each hosts/*/default.nix --
+  # NOT here, or both machines would share one id.
 
   boot.supportedFilesystems.zfs = true;
 

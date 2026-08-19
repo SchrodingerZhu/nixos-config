@@ -13,7 +13,8 @@
   # proper systemd units in early boot.
   boot.initrd.systemd.enable = true;
 
-  # AMD Ryzen AI Max+ 395 (Strix Halo, Zen 5): active pstate (EPP) + microcode.
+  # AMD (Ryzen 9950X workstation / Ryzen AI Max+ 395 laptop): active pstate
+  # (EPP governor) + microcode updates. Shared -- both hosts are AMD.
   boot.kernelParams = [ "amd_pstate=active" ];
   hardware.cpu.amd.updateMicrocode = true;
   hardware.enableRedistributableFirmware = true;

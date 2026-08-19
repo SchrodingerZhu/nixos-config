@@ -23,6 +23,7 @@
     ../../modules/system/fonts.nix
     ../../modules/system/hardening.nix
     ../../modules/system/network.nix
+    ../../modules/system/sshd.nix
     ../../modules/system/zrepl.nix
     ../../modules/system/laptop.nix
   ];
@@ -50,6 +51,7 @@
 
   # --- Identity / locale / time ---
   networking.hostName = "manifold";
+  networking.hostId = "84502e96"; # ZFS pool owner id for THIS machine (do not reuse)
   time.timeZone = "America/Los_Angeles";
   i18n.defaultLocale = "en_US.UTF-8";
   console.keyMap = "us";

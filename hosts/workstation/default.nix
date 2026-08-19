@@ -22,6 +22,7 @@
     ../../modules/system/fonts.nix
     ../../modules/system/hardening.nix
     ../../modules/system/network.nix
+    ../../modules/system/sshd.nix
     ../../modules/system/vpn.nix
     ../../modules/system/zrepl.nix
   ];
@@ -49,6 +50,17 @@
 
   # --- Identity / locale / time ---
   networking.hostName = "schrodingerzy";
+  networking.hostId = "d7d9d8b0"; # ZFS pool owner id for THIS machine (do not reuse)
+
+  # Mirrored ESP: keep the secondary ESP (/boot-fallback on the other NVMe)
+  # byte-for-byte in sync after every bootloader install, so the box still boots
+  # if the primary NVMe dies. (The ZFS pool is a non-redundant stripe, but the
+  # ESPs are not.) Workstation-only -- the laptop is single-disk.
+  boot.loader.systemd-boot.extraInstallCommands = ''
+    ${pkgs.rsync}/bin/rsync -a --delete /boot/EFI/ /boot-fallback/EFI/
+    ${pkgs.rsync}/bin/rsync -a --delete /boot/loader/ /boot-fallback/loader/
+  '';
+
   time.timeZone = "America/Los_Angeles";
   i18n.defaultLocale = "en_US.UTF-8";
   console.keyMap = "us";
