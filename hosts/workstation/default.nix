@@ -23,6 +23,7 @@
     ../../modules/system/hardening.nix
     ../../modules/system/network.nix
     ../../modules/system/sshd.nix
+    ../../modules/system/cowrie.nix
     ../../modules/system/vpn.nix
     ../../modules/system/zrepl.nix
   ];

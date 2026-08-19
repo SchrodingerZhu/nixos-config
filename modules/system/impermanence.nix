@@ -37,6 +37,7 @@
       "/var/lib/bluetooth"
       "/var/lib/zrepl" # zrepl snapshot-job state
       "/var/lib/fcitx5" # input-method state
+      "/var/lib/containers" # rootful podman image store (Cowrie honeypot image) -> no re-pull each boot
     ];
     files = [
       "/etc/machine-id" # stable machine-id for journald continuity

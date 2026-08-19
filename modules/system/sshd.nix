@@ -1,11 +1,9 @@
-# Inbound SSH + a honeypot on the well-known port. Shared by every host.
+# Inbound SSH (the REAL daemon). Shared by every host.
 #
-#   * Real sshd listens on :5678 ONLY, public-key auth ONLY (no passwords, no
+#   * sshd listens on :5678 ONLY, public-key auth ONLY (no passwords, no
 #     keyboard-interactive, no root login).
-#   * endlessh (an SSH tarpit) sits on :22 as a honeypot: it answers the port
-#     every scanner probes with an endless, byte-at-a-time fake banner, so bots
-#     hang there instead of finding the real daemon. It never authenticates
-#     anything -- it has no shell and no access to the system.
+#   * The well-known port :22 is handed to a Cowrie honeypot instead -- see
+#     modules/system/cowrie.nix.
 #
 # Ephemeral-root note: /etc is wiped every boot, so the host keys are kept on
 # the persistent pool (/persist/etc/ssh). sshd's pre-start generates them there
@@ -40,11 +38,4 @@
   users.users.schrodingerzy.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII3MmPmNv0RjGULxJZCDhVYg0HIpJU0LVlSIzXsPyFVy"
   ];
-
-  # --- Honeypot / tarpit on the well-known SSH port ---
-  services.endlessh = {
-    enable = true;
-    port = 22;
-    openFirewall = true; # opens 22/tcp so scanners actually reach the tarpit
-  };
 }
