@@ -34,11 +34,18 @@
     };
   };
 
-  # Cowrie's var/ must be writable by the image's uid/gid 999; create it on the
-  # persistent pool before the container unit starts.
+  # Cowrie's var/ must be writable by the image's uid/gid 999. Because the empty
+  # /persist bind-mount HIDES the var/ skeleton the image ships, pre-create the
+  # subdirs Cowrie writes to -- it opens the tty-log file without mkdir-ing its
+  # parent, so a missing var/lib/cowrie/tty crashes the session on every login.
   systemd.tmpfiles.rules = [
-    "d /persist/cowrie     0755 root root - -"
-    "d /persist/cowrie/var 0750 999  999  - -"
+    "d /persist/cowrie                          0755 root root - -"
+    "d /persist/cowrie/var                      0750 999  999  - -"
+    "d /persist/cowrie/var/lib/cowrie           0750 999  999  - -"
+    "d /persist/cowrie/var/lib/cowrie/tty       0750 999  999  - -"
+    "d /persist/cowrie/var/lib/cowrie/downloads 0750 999  999  - -"
+    "d /persist/cowrie/var/log/cowrie           0750 999  999  - -"
+    "d /persist/cowrie/var/run                  0750 999  999  - -"
   ];
 
   # Let scanners actually reach the honeypot.
