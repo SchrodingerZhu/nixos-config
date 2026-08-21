@@ -114,8 +114,10 @@
       "XF86AudioRaiseVolume".action = spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%+";
       "XF86AudioLowerVolume".action = spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-";
       "XF86AudioMute".action = spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle";
-      "XF86MonBrightnessUp".action = spawn "brightnessctl" "set" "5%+";
-      "XF86MonBrightnessDown".action = spawn "brightnessctl" "set" "5%-";
+      # -e4: exponential (perceptual) mapping — linear % crams all visible
+      # dimming into the bottom of the amdgpu backlight's 0-65535 range.
+      "XF86MonBrightnessUp".action = spawn "brightnessctl" "-e4" "set" "5%+";
+      "XF86MonBrightnessDown".action = spawn "brightnessctl" "-e4" "set" "5%-";
 
       # Session
       "Mod+Shift+Slash".action = show-hotkey-overlay;
