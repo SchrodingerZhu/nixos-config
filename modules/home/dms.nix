@@ -51,6 +51,7 @@
     wtype # clipboard paste
     brightnessctl # brightness keys
     playerctl # media keys
+    pulseaudio # pactl — DMS uses it to switch bluetooth codecs
     wl-clipboard # clipboard
     cliphist # clipboard history
   ];
