@@ -12,6 +12,21 @@
 #     reader). Enabled here + wired into PAM login/sudo so it works alongside
 #     the existing password / U2F fallbacks (control=sufficient).
 { pkgs, lib, ... }:
+let
+  # The Z13 panel's firmware rescales amdgpu_bl1 brightness writes upward
+  # (~x1.016); raw values >= 64600 overflow 16 bits and wrap to duty cycle 0,
+  # turning the screen OFF at "100%". 64400 already yields the true hardware
+  # maximum (actual_brightness = 65535), so clamping there loses nothing.
+  # Runs on every backlight change uevent, so it also covers the DMS slider
+  # and anything else writing to sysfs, not just the niri brightnessctl keys.
+  backlightClamp = pkgs.writeShellScript "backlight-clamp" ''
+    bl="/sys$DEVPATH"
+    cur=$(cat "$bl/brightness") || exit 0
+    if [ "$cur" -gt 64400 ]; then
+      echo 64400 > "$bl/brightness"
+    fi
+  '';
+in
 {
   # --- ASUS ROG platform daemons -------------------------------------------
   services.asusd.enable = true;
@@ -89,5 +104,6 @@
   # group=render for anything the amdxdna driver creates in /dev/accel.
   services.udev.extraRules = ''
     SUBSYSTEM=="accel", KERNEL=="accel[0-9]*", MODE="0660", GROUP="render"
+    ACTION=="change", SUBSYSTEM=="backlight", KERNEL=="amdgpu_bl*", RUN+="${backlightClamp}"
   '';
 }
