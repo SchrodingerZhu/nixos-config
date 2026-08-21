@@ -48,6 +48,24 @@
         })
       ];
     })
+    # libdisplay-info_0_2: removed from nixpkgs (default is now 0.4, throw
+    # alias left behind), but niri-flake's package hard-asserts version
+    # 0.2.0 to match niri's vendored bindings. Resurrect the old derivation
+    # (same deps/flags as 0.4 -- only src differs). Drop once
+    # sodiboo/niri-flake#1851 is fixed (PR #1853) and the niri pin is bumped.
+    (final: prev: {
+      libdisplay-info_0_2 = prev.libdisplay-info.overrideAttrs (old: {
+        name = "libdisplay-info-0.2.0";
+        version = "0.2.0";
+        src = prev.fetchFromGitLab {
+          domain = "gitlab.freedesktop.org";
+          owner = "emersion";
+          repo = "libdisplay-info";
+          rev = "0.2.0";
+          hash = "sha256-6xmWBrPHghjok43eIDGeshpUEQTuwWLXNHg7CnBUt3Q=";
+        };
+      });
+    })
   ];
 
   # --- Identity / locale / time ---
