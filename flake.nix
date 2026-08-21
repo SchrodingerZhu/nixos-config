@@ -24,7 +24,9 @@
 
     # niri compositor flake. NOT following nixpkgs -> keeps niri.cachix hits
     # (overriding nixpkgs would rebuild niri from source).
-    niri.url = "github:sodiboo/niri-flake";
+    # epireyn fork: actively maintained; sodiboo upstream is stale and still
+    # references libdisplay-info_0_2, removed from nixpkgs (sodiboo/niri-flake#1851).
+    niri.url = "github:epireyn/niri-flake";
 
     # DankMaterialShell — doc recommends following nixpkgs.
     dms = {
