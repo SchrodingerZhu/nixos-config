@@ -1,5 +1,26 @@
 {
   "nodes": {
+    "bilibili-streamer": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787424727,
+        "narHash": "sha256-XVU1e8pu10Pi4K4m+kXkwoTxc2sdC5Ui9a+rqVm4suQ=",
+        "owner": "SchrodingerZhu",
+        "repo": "bilibili-streamer",
+        "rev": "03684559d980e98e19ac44b9bb25a722f85dd0c7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "SchrodingerZhu",
+        "ref": "nix-flake",
+        "repo": "bilibili-streamer",
+        "type": "github"
+      }
+    },
     "disko": {
       "inputs": {
         "nixpkgs": [
@@ -395,6 +416,7 @@
     },
     "root": {
       "inputs": {
+        "bilibili-streamer": "bilibili-streamer",
         "disko": "disko",
         "dms": "dms",
         "home-manager": "home-manager",

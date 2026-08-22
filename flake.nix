@@ -5,6 +5,12 @@
     # Track nixos-unstable throughout.
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    # Native Tauri build; the upstream AppImage forces its GTK backend to X11.
+    bilibili-streamer = {
+      url = "github:SchrodingerZhu/bilibili-streamer/nix-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";

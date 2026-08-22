@@ -13,6 +13,7 @@
     ./niri.nix
     ./dms.nix
     ./wezterm.nix
+    ./bilibili-streamer.nix
     ./packages.nix
     ./shell.nix
     ./direnv.nix
