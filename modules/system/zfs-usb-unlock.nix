@@ -10,13 +10,18 @@
 # prompt behaves as before; a stick with a WRONG passphrase burns 1 of the 3
 # tries and the remaining 2 stay interactive.
 #
-# The stick holds the passphrase in PLAIN TEXT: treat it like a written-down
-# password. It defends against remote attackers and disk theft, not against
-# someone who steals the machine and the stick together.
+# The stick carries the passphrase TPM-SEALED (systemd-creds, --with-key=tpm2):
+# /zfs-key.cred only decrypts on THIS machine's TPM2, so a stolen or lost
+# stick reveals nothing by itself. A plain-text /zfs-passphrase file is still
+# honored as a secondary path (useful for a break-glass stick kept elsewhere).
+# TPM caveat: a firmware update / secure-boot change can rotate the sealing
+# PCRs — decryption then fails, boot falls back to the prompt, and the stick
+# needs re-encrypting (same commands as below).
 #
 # Stick preparation (whole-device FAT, no partition table):
+#   systemd-creds encrypt --with-key=tpm2 --name=zfs-key /tmp/key /tmp/zfs-key.cred
 #   mkfs.vfat -I -n ZFSKEY /dev/sdX
-#   mount /dev/sdX /mnt && printf '%s' "$PASSPHRASE" > /mnt/zfs-passphrase
+#   mount /dev/sdX /mnt && cp /tmp/zfs-key.cred /mnt/zfs-key.cred
 { config, pkgs, ... }:
 {
   # USB mass storage is autoloaded by udev (usbhid/uas/sd_mod/xhci_pci are
@@ -29,10 +34,15 @@
     "nls_iso8859-1"
   ];
 
+  # TPM2 in stage 1: tpm-crb/tpm-tis kernel modules + tpm2-tss libraries
+  # (systemd dlopens them by absolute store path, so systemd-creds works).
+  boot.initrd.systemd.tpm2.enable = true;
+
   # mount/umount are already in the initrd's /bin (util-linux-minimal, wired
-  # up by the systemd stage-1 module); only the reply agent is missing.
+  # up by the systemd stage-1 module); the reply agent and creds tool are not.
   boot.initrd.systemd.extraBin = {
     systemd-reply-password = "${config.boot.initrd.systemd.package}/lib/systemd/systemd-reply-password";
+    systemd-creds = "${config.boot.initrd.systemd.package}/bin/systemd-creds";
   };
 
   boot.initrd.systemd.services.zfs-usb-unlock = {
@@ -62,10 +72,22 @@
 
       mkdir -p /zfskey
       mount -t vfat -o ro "$dev" /zfskey || exit 0
-      key=$(cat /zfskey/zfs-passphrase 2>/dev/null) || key=""
+      key=""
+      if [ -e /zfskey/zfs-key.cred ]; then
+        # Give the fTPM a moment to show up (tpm-crb loads via udev).
+        for _ in $(seq 50); do
+          [ -e /dev/tpmrm0 ] && break
+          sleep 0.1
+        done
+        key=$(systemd-creds decrypt --name=zfs-key --tpm2-device=auto /zfskey/zfs-key.cred - 2>/dev/null) \
+          || { key=""; echo "TPM decryption of zfs-key.cred failed"; }
+      fi
+      if [ -z "$key" ]; then
+        key=$(cat /zfskey/zfs-passphrase 2>/dev/null) || key=""
+      fi
       umount /zfskey
       if [ -z "$key" ]; then
-        echo "ZFSKEY stick has no /zfs-passphrase; leaving the console prompt"
+        echo "ZFSKEY stick yielded no usable key; leaving the console prompt"
         exit 0
       fi
 
