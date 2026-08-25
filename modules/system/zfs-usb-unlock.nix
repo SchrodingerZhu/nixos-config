@@ -94,12 +94,18 @@
 
       # Wait for the import unit's ask-password request (pool device discovery
       # can itself take up to 60s), then answer it over its agent socket.
+      # Pure-shell parsing: the initrd has coreutils only — no grep/sed.
       for _ in $(seq 900); do
         for ask in /run/systemd/ask-password/ask.*; do
           [ -e "$ask" ] || continue
-          grep -q '^Message=Enter key for rpool' "$ask" || continue
-          socket=$(sed -n 's/^Socket=//p' "$ask")
-          [ -n "$socket" ] || continue
+          socket="" match=""
+          while IFS= read -r line; do
+            case "$line" in
+              "Message=Enter key for rpool"*) match=1 ;;
+              Socket=*) socket=''${line#Socket=} ;;
+            esac
+          done < "$ask"
+          [ -n "$match" ] && [ -n "$socket" ] || continue
           printf '%s' "$key" | systemd-reply-password 1 "$socket" || true
           echo "answered the rpool key prompt from the USB stick"
           exit 0
