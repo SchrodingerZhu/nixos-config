@@ -27,6 +27,7 @@
     ../../modules/system/vpn.nix
     ../../modules/system/zrepl.nix
     ../../modules/system/ddc.nix
+    ../../modules/system/ups-server.nix
   ];
 
   # --- Overlays: CachyOS kernel (pinned -> max attic cache hits), niri, vicinae ---
