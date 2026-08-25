@@ -27,6 +27,7 @@
     ../../modules/system/cowrie.nix
     ../../modules/system/zrepl.nix
     ../../modules/system/laptop.nix
+    ../../modules/system/ddc.nix
   ];
 
   # --- Overlays: CachyOS kernel (pinned -> max attic cache hits), niri, vicinae ---

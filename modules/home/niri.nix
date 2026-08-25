@@ -5,6 +5,19 @@
 # DMS itself is started by its systemd user service (see dms.nix), so we do NOT
 # spawn it here. KeePassXC and fcitx5 are spawned at startup.
 { config, pkgs, ... }:
+let
+  # Step EVERY backlight device by the given delta ("5%+"/"5%-"): the internal
+  # amdgpu panel plus any external monitor exposed by ddcci-backlight
+  # (modules/system/ddc.nix). -e4: exponential (perceptual) mapping — linear %
+  # crams all visible dimming into the bottom of the 0-65535 range.
+  brightnessStepAll = pkgs.writeShellScript "brightness-step-all" ''
+    ${pkgs.brightnessctl}/bin/brightnessctl -m -l -c backlight \
+      | ${pkgs.coreutils}/bin/cut -d, -f1 \
+      | while read -r dev; do
+          ${pkgs.brightnessctl}/bin/brightnessctl -e4 -d "$dev" set "$1" >/dev/null
+        done
+  '';
+in
 {
   programs.niri.package = pkgs.niri-unstable;
 
@@ -114,10 +127,8 @@
       "XF86AudioRaiseVolume".action = spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%+";
       "XF86AudioLowerVolume".action = spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-";
       "XF86AudioMute".action = spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle";
-      # -e4: exponential (perceptual) mapping — linear % crams all visible
-      # dimming into the bottom of the amdgpu backlight's 0-65535 range.
-      "XF86MonBrightnessUp".action = spawn "brightnessctl" "-e4" "set" "5%+";
-      "XF86MonBrightnessDown".action = spawn "brightnessctl" "-e4" "set" "5%-";
+      "XF86MonBrightnessUp".action = spawn "${brightnessStepAll}" "5%+";
+      "XF86MonBrightnessDown".action = spawn "${brightnessStepAll}" "5%-";
 
       # Session
       "Mod+Shift+Slash".action = show-hotkey-overlay;
