@@ -29,7 +29,6 @@
     ../../modules/system/ddc.nix
     ../../modules/system/ups-server.nix
     ../../modules/system/zfs-usb-unlock.nix
-    ../../modules/system/timezone.nix
   ];
 
   # --- Overlays: CachyOS kernel (pinned -> max attic cache hits), niri, vicinae ---
@@ -66,7 +65,11 @@
     ${pkgs.rsync}/bin/rsync -a --delete /boot/loader/ /boot-fallback/loader/
   '';
 
-  # time.timeZone deliberately unset: automatic-timezoned owns it (modules/system/timezone.nix)
+  # Static zone, NOT modules/system/timezone.nix: geolocation is unusable here.
+  # beacondb doesn't know the local APs (verified: "fallback":"ipf") and the
+  # IP fallback sees the ProtonVPN exit (San Jose), so automatic-timezoned
+  # kept picking America/Los_Angeles. The box is stationary — pin it.
+  time.timeZone = "America/New_York";
   i18n.defaultLocale = "en_US.UTF-8";
   console.keyMap = "us";
 
