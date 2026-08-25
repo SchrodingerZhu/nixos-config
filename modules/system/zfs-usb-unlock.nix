@@ -32,6 +32,7 @@
     "vfat"
     "nls_cp437"
     "nls_iso8859-1"
+    "nls_ascii" # kernel's FAT_DEFAULT_IOCHARSET — mount fails without it
   ];
 
   # TPM2 in stage 1: tpm-crb/tpm-tis kernel modules + tpm2-tss libraries
