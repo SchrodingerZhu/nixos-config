@@ -29,6 +29,7 @@
     ../../modules/system/ddc.nix
     ../../modules/system/ups-server.nix
     ../../modules/system/zfs-usb-unlock.nix
+    ../../modules/system/timezone.nix
   ];
 
   # --- Overlays: CachyOS kernel (pinned -> max attic cache hits), niri, vicinae ---
@@ -65,7 +66,7 @@
     ${pkgs.rsync}/bin/rsync -a --delete /boot/loader/ /boot-fallback/loader/
   '';
 
-  time.timeZone = "America/Los_Angeles";
+  # time.timeZone deliberately unset: automatic-timezoned owns it (modules/system/timezone.nix)
   i18n.defaultLocale = "en_US.UTF-8";
   console.keyMap = "us";
 

@@ -29,6 +29,7 @@
     ../../modules/system/laptop.nix
     ../../modules/system/ddc.nix
     ../../modules/system/ups-client.nix
+    ../../modules/system/timezone.nix
   ];
 
   # --- Overlays: CachyOS kernel (pinned -> max attic cache hits), niri, vicinae ---
@@ -55,7 +56,7 @@
   # --- Identity / locale / time ---
   networking.hostName = "manifold";
   networking.hostId = "84502e96"; # ZFS pool owner id for THIS machine (do not reuse)
-  time.timeZone = "America/Los_Angeles";
+  # time.timeZone deliberately unset: automatic-timezoned owns it (modules/system/timezone.nix)
   i18n.defaultLocale = "en_US.UTF-8";
   console.keyMap = "us";
 
