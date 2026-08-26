@@ -31,9 +31,10 @@ in
     wantedBy = [ "multi-user.target" ];
     wants = [ "network-online.target" ];
     after = [ "network-online.target" ];
+    # sccache-dist self-daemonizes by default; SCCACHE_NO_DAEMON=1 (checked in
+    # sccache's util::daemonize) keeps it foreground for a plain simple unit.
+    environment.SCCACHE_NO_DAEMON = "1";
     serviceConfig = {
-      # sccache-dist self-daemonizes UNLESS --syslog is given, in which case
-      # it stays in the foreground (empirically verified) -> plain simple unit.
       ExecStart = "${sccacheDist}/bin/sccache-dist scheduler --syslog info --config /persist/secrets/sccache/scheduler.toml";
       Restart = "on-failure";
       RestartSec = "5s";
@@ -48,8 +49,8 @@ in
       "network-online.target"
       "sccache-scheduler.service"
     ];
+    environment.SCCACHE_NO_DAEMON = "1"; # see scheduler unit
     serviceConfig = {
-      # Foreground with --syslog, same as the scheduler.
       ExecStart = "${sccacheDist}/bin/sccache-dist server --syslog info --config /persist/secrets/sccache/server.toml";
       Restart = "on-failure";
       RestartSec = "5s";
