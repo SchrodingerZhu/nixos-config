@@ -35,7 +35,16 @@ in
   # DDC experiments). Disable the involved features:
   #   0x010 PSR | 0x200 PSR-SU | 0x400 Panel Replay | 0x800 IPS  = 0xE10
   # Costs some battery; remove bits once a kernel fixes the ISM path.
-  boot.kernelParams = [ "amdgpu.dcdebugmask=0xE10" ];
+  #
+  # pcie_port_pm=off: poweroff hangs in thunderbolt nhi_pci_remove whenever
+  # the TB3 monitor (LG UltraFine) was enumerated during the session — even
+  # after deauthorize/unplug. Upstream reports tie this hang class to PCIe
+  # port power management; disabling it is the documented workaround. Reboots
+  # were unaffected; only ACPI S5 wedged. Small idle-power cost.
+  boot.kernelParams = [
+    "amdgpu.dcdebugmask=0xE10"
+    "pcie_port_pm=off"
+  ];
 
   # --- Thunderbolt / USB4 ---------------------------------------------------
   # The controller reports security level "user": devices need userspace
