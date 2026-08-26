@@ -29,6 +29,9 @@
     ../../modules/system/ddc.nix
     ../../modules/system/ups-server.nix
     ../../modules/system/zfs-usb-unlock.nix
+    ../../modules/system/rustfs.nix
+    ../../modules/system/sccache-dist.nix
+    ../../modules/system/sccache.nix
   ];
 
   # --- Overlays: CachyOS kernel (pinned -> max attic cache hits), niri, vicinae ---

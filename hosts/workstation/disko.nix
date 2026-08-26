@@ -138,6 +138,14 @@
             type = "zfs_fs";
             mountpoint = "/persist";
           };
+
+          # --- Persistent: rustfs object store (fleet sccache cache).
+          #     Quota caps the never-evicting cache; contents are disposable. ---
+          "safe/rustfs" = {
+            type = "zfs_fs";
+            mountpoint = "/var/lib/rustfs";
+            options.quota = "200G";
+          };
         };
       };
     };

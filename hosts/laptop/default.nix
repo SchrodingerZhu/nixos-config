@@ -30,6 +30,7 @@
     ../../modules/system/ddc.nix
     ../../modules/system/ups-client.nix
     ../../modules/system/timezone.nix
+    ../../modules/system/sccache.nix
   ];
 
   # --- Overlays: CachyOS kernel (pinned -> max attic cache hits), niri, vicinae ---
