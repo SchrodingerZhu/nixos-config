@@ -37,11 +37,14 @@
     requires = [ "zfs-mount.service" ];
   };
 
-  # TLS material is installed root-owned; hand it to the service user on every
-  # boot/activation (self-healing, and the rustfs user only exists post-switch).
+  # TLS material stays root-OWNED with group access for the service user:
+  # tmpfiles refuses to chown files under a non-root-owned directory ("unsafe
+  # path transition" guard), so granting via the rustfs GROUP is the way that
+  # actually applies. Runs every boot/activation (the rustfs user/group only
+  # exist post-switch).
   systemd.tmpfiles.rules = [
-    "z /persist/secrets/rustfs-tls 0750 rustfs rustfs -"
-    "z /persist/secrets/rustfs-tls/rustfs_cert.pem 0640 rustfs rustfs -"
-    "z /persist/secrets/rustfs-tls/rustfs_key.pem 0640 rustfs rustfs -"
+    "z /persist/secrets/rustfs-tls 0750 root rustfs -"
+    "z /persist/secrets/rustfs-tls/rustfs_cert.pem 0640 root rustfs -"
+    "z /persist/secrets/rustfs-tls/rustfs_key.pem 0640 root rustfs -"
   ];
 }

@@ -27,7 +27,9 @@ in
     wants = [ "network-online.target" ];
     after = [ "network-online.target" ];
     serviceConfig = {
-      ExecStart = "${sccacheDist}/bin/sccache-dist scheduler --config /persist/secrets/sccache/scheduler.toml";
+      # sccache-dist daemonizes (fork + parent exit) with no foreground flag.
+      Type = "forking";
+      ExecStart = "${sccacheDist}/bin/sccache-dist scheduler --syslog info --config /persist/secrets/sccache/scheduler.toml";
       Restart = "on-failure";
       RestartSec = "5s";
     };
@@ -42,7 +44,9 @@ in
       "sccache-scheduler.service"
     ];
     serviceConfig = {
-      ExecStart = "${sccacheDist}/bin/sccache-dist server --config /persist/secrets/sccache/server.toml";
+      # Daemonizes like the scheduler.
+      Type = "forking";
+      ExecStart = "${sccacheDist}/bin/sccache-dist server --syslog info --config /persist/secrets/sccache/server.toml";
       Restart = "on-failure";
       RestartSec = "5s";
     };
