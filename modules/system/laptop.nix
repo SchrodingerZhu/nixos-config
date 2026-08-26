@@ -28,6 +28,15 @@ let
   '';
 in
 {
+  # --- eDP stability: disable panel power-saving in amdgpu DC --------------
+  # The Z13 panel wedges in the PSR / idle-screen-management path (WARNING at
+  # mod_power_set_psr_event via dm_ism_commit_idle_optimization_state, panel
+  # stops updating until reboot; seen on 7.2.0-cachyos with and without any
+  # DDC experiments). Disable the involved features:
+  #   0x010 PSR | 0x200 PSR-SU | 0x400 Panel Replay | 0x800 IPS  = 0xE10
+  # Costs some battery; remove bits once a kernel fixes the ISM path.
+  boot.kernelParams = [ "amdgpu.dcdebugmask=0xE10" ];
+
   # --- ASUS ROG platform daemons -------------------------------------------
   services.asusd.enable = true;
   services.supergfxd.enable = true;
@@ -105,5 +114,9 @@ in
   services.udev.extraRules = ''
     SUBSYSTEM=="accel", KERNEL=="accel[0-9]*", MODE="0660", GROUP="render"
     ACTION=="change", SUBSYSTEM=="backlight", KERNEL=="amdgpu_bl*", RUN+="${backlightClamp}"
+    # USB hubs default to autosuspend with 0ms delay; the USB-C dock hub
+    # renegotiates its whole link on suspend/resume (full-tree disconnects,
+    # input dropouts every few seconds). Keep hubs powered.
+    ACTION=="add", SUBSYSTEM=="usb", ATTR{bDeviceClass}=="09", TEST=="power/control", ATTR{power/control}="on"
   '';
 }
