@@ -28,6 +28,15 @@
   # useGlobalPkgs, so it inherits this).
   nixpkgs.config.allowUnfree = true;
 
+  # The flake repo is owned by the user, but `sudo nixos-rebuild` evaluates as
+  # root: libgit2 refuses "dubious ownership" unless the path is marked safe.
+  # Root's ~/.gitconfig is wiped every boot (ephemeral root), so set it in the
+  # system-wide /etc/gitconfig instead.
+  environment.etc."gitconfig".text = ''
+    [safe]
+    	directory = /persist/etc/nixos
+  '';
+
   # Make ad-hoc `nix shell nixpkgs#...` resolve to the SAME nixpkgs as the flake.
   nix.registry.nixpkgs.flake = inputs.nixpkgs;
   nix.nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
