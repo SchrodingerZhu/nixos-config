@@ -1,39 +1,29 @@
-# sccache-dist scheduler + build server (workstation only): manifold (and the
-# workstation itself) ship Rust compile jobs here, per
+# sccache-dist SCHEDULER (workstation only): dispatches Rust compile jobs
+# from any client to the registered build servers — both hosts run one via
+# modules/system/sccache-builder.nix — per
 # https://brokenco.de/2025/01/05/sccache-distributed-compilation.html.
 #
 # How this works with Nix toolchains: the CLIENT tars its devShell's rustc and
-# every linked library with absolute /nix/store paths preserved. The server
-# unpacks that content-addressed archive as an overlayfs lowerdir and runs the
-# compile inside bubblewrap, so the store paths resolve WITHOUT nix or any
-# toolchain installed here. Only compile steps distribute (linking is always
-# local); rustc only (C toolchains would need explicit [dist.toolchains]);
-# every failure mode falls back to a local compile on the client.
+# every linked library with absolute /nix/store paths preserved. A build
+# server unpacks that content-addressed archive as an overlayfs lowerdir and
+# runs the compile inside bubblewrap, so the store paths resolve WITHOUT nix
+# or any toolchain installed on it. Only compile steps distribute (linking is
+# always local); rustc only (C toolchains would need explicit
+# [dist.toolchains]); every failure mode falls back to a local compile.
 #
-# Config files live in /persist/secrets/sccache/{scheduler,server}.toml (NOT
-# in git — they embed the auth tokens). The server runs as root: the overlay
-# builder needs to mount overlayfs. bwrap_path in server.toml points at
-# /run/current-system/sw/bin/bwrap, hence bubblewrap in systemPackages.
-#
-# GOTCHA: the scheduler binds the server's bearer token to its advertised
-# public_addr and checks the heartbeat's SOURCE IP against it — server.toml's
-# scheduler_url must therefore use 192.168.0.92, not 127.0.0.1, or every
-# heartbeat 401s with "invalid_bearer_token_mismatched_address".
+# Config: /persist/secrets/sccache/scheduler.toml (NOT in git — embeds the
+# client + server auth tokens).
 { pkgs, ... }:
 let
   sccacheDist = pkgs.sccache.override { distributed = true; };
 in
 {
-  environment.systemPackages = [ pkgs.bubblewrap ];
-
   systemd.services.sccache-scheduler = {
     description = "sccache-dist scheduler";
     wantedBy = [ "multi-user.target" ];
     wants = [ "network-online.target" ];
     after = [ "network-online.target" ];
-    # sccache-dist self-daemonizes by default; SCCACHE_NO_DAEMON=1 (checked in
-    # sccache's util::daemonize) keeps it foreground for a plain simple unit.
-    environment.SCCACHE_NO_DAEMON = "1";
+    environment.SCCACHE_NO_DAEMON = "1"; # daemonize() honors this -> simple unit
     serviceConfig = {
       ExecStart = "${sccacheDist}/bin/sccache-dist scheduler --syslog info --config /persist/secrets/sccache/scheduler.toml";
       Restart = "on-failure";
@@ -41,29 +31,5 @@ in
     };
   };
 
-  systemd.services.sccache-server = {
-    description = "sccache-dist build server";
-    wantedBy = [ "multi-user.target" ];
-    wants = [ "network-online.target" ];
-    after = [
-      "network-online.target"
-      "sccache-scheduler.service"
-    ];
-    environment.SCCACHE_NO_DAEMON = "1"; # see scheduler unit
-    serviceConfig = {
-      ExecStart = "${sccacheDist}/bin/sccache-dist server --syslog info --config /persist/secrets/sccache/server.toml";
-      Restart = "on-failure";
-      RestartSec = "5s";
-    };
-  };
-
-  # Toolchain archive cache + overlay build scratch (ephemeral root is fine —
-  # clients re-upload toolchains after a reboot, content-addressed and cheap).
-  systemd.tmpfiles.rules = [ "d /var/cache/sccache-dist 0700 root root -" ];
-
-  # 10600 scheduler (clients + server), 10501 server (clients connect directly).
-  networking.firewall.allowedTCPPorts = [
-    10600
-    10501
-  ];
+  networking.firewall.allowedTCPPorts = [ 10600 ];
 }

@@ -31,6 +31,7 @@
     ../../modules/system/zfs-usb-unlock.nix
     ../../modules/system/rustfs.nix
     ../../modules/system/sccache-dist.nix
+    ../../modules/system/sccache-builder.nix
     ../../modules/system/sccache.nix
   ];
 
