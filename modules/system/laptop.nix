@@ -37,6 +37,21 @@ in
   # Costs some battery; remove bits once a kernel fixes the ISM path.
   boot.kernelParams = [ "amdgpu.dcdebugmask=0xE10" ];
 
+  # --- Thunderbolt / USB4 ---------------------------------------------------
+  # The controller reports security level "user": devices need userspace
+  # authorization, and nothing was installed to grant it — attached USB4
+  # devices sat unauthorized in limbo. boltd authorizes (and remembers)
+  # devices properly. Suspected accomplice in the poweroff hang inside
+  # thunderbolt's nhi teardown (hung-task trace: nhi_pci_remove).
+  services.hardware.bolt.enable = true;
+
+  # Poweroff-hang safety net: systemd arms the sp5100 hardware watchdog for
+  # shutdown anyway (default 10min) — shorten it so a wedged kernel teardown
+  # self-resets in 30s instead. A watchdog can only RESET, not cut power:
+  # a hung `poweroff` becomes reset->boot-menu, where the power button works
+  # cleanly. Hung `reboot` is fully cured.
+  systemd.settings.Manager.RebootWatchdogSec = "30s";
+
   # --- ASUS ROG platform daemons -------------------------------------------
   services.asusd.enable = true;
   services.supergfxd.enable = true;
