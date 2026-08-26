@@ -32,8 +32,8 @@ in
     wants = [ "network-online.target" ];
     after = [ "network-online.target" ];
     serviceConfig = {
-      # sccache-dist daemonizes (fork + parent exit) with no foreground flag.
-      Type = "forking";
+      # sccache-dist self-daemonizes UNLESS --syslog is given, in which case
+      # it stays in the foreground (empirically verified) -> plain simple unit.
       ExecStart = "${sccacheDist}/bin/sccache-dist scheduler --syslog info --config /persist/secrets/sccache/scheduler.toml";
       Restart = "on-failure";
       RestartSec = "5s";
@@ -49,8 +49,7 @@ in
       "sccache-scheduler.service"
     ];
     serviceConfig = {
-      # Daemonizes like the scheduler.
-      Type = "forking";
+      # Foreground with --syslog, same as the scheduler.
       ExecStart = "${sccacheDist}/bin/sccache-dist server --syslog info --config /persist/secrets/sccache/server.toml";
       Restart = "on-failure";
       RestartSec = "5s";
