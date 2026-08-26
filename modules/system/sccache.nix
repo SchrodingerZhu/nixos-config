@@ -2,10 +2,11 @@
 # workstation's rustfs (modules/system/rustfs.nix) + distributed compilation
 # via its sccache-dist scheduler (modules/system/sccache-dist.nix).
 #
-# PROJECT USAGE — a flake devShell opts in with exactly:
-#   RUSTC_WRAPPER = "sccache";
-#   CARGO_INCREMENTAL = "0";   # sccache can't cache/distribute incremental
-#                              # builds; without this, dev builds stay local
+# RUSTC_WRAPPER/CARGO_INCREMENTAL are set GLOBALLY below (operator choice):
+# every cargo build on these machines caches + distributes with no per-project
+# setup. Trade-offs: incremental compilation is off everywhere (cold rebuilds
+# are what the cache accelerates), and builds need rustfs reachable — to build
+# fully locally in a pinch: `env -u RUSTC_WRAPPER cargo build`.
 # Inspect with `sccache --show-stats` and `sccache --dist-status`.
 #
 # The S3 settings ride global env vars (below); the dist scheduler URL + auth
@@ -32,6 +33,8 @@ in
     SCCACHE_ENDPOINT = "https://192.168.0.92:9000";
     SCCACHE_REGION = "auto";
     AWS_SHARED_CREDENTIALS_FILE = "/persist/secrets/sccache/aws-credentials";
+    RUSTC_WRAPPER = "sccache";
+    CARGO_INCREMENTAL = "0";
   };
 
   # ~/.config/sccache/config -> the secret-bearing dist config on /persist.
