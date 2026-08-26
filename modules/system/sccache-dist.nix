@@ -14,6 +14,11 @@
 # in git — they embed the auth tokens). The server runs as root: the overlay
 # builder needs to mount overlayfs. bwrap_path in server.toml points at
 # /run/current-system/sw/bin/bwrap, hence bubblewrap in systemPackages.
+#
+# GOTCHA: the scheduler binds the server's bearer token to its advertised
+# public_addr and checks the heartbeat's SOURCE IP against it — server.toml's
+# scheduler_url must therefore use 192.168.0.92, not 127.0.0.1, or every
+# heartbeat 401s with "invalid_bearer_token_mismatched_address".
 { pkgs, ... }:
 let
   sccacheDist = pkgs.sccache.override { distributed = true; };
