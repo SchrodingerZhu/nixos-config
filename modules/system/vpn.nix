@@ -105,6 +105,8 @@ in
     content = ''
       set sc_v4 { type ipv4_addr; }
       set sc_v6 { type ipv6_addr; }
+      set direct_v4 { type ipv4_addr; }
+      set direct_v6 { type ipv6_addr; }
 
       chain mark_dst {
         type route hook output priority mangle; policy accept;
@@ -112,6 +114,13 @@ in
         # DNS always rides the default tunnel to reach 10.2.0.1.
         udp dport 53 return
         tcp dport 53 return
+
+        # Dev-infra destinations (github / nix caches / crates / pypi) go
+        # DIRECT: large downloads break mid-stream through the tunnel. Sets are
+        # dnsmasq-filled (nftset entries below). BEFORE the sc lines, so the
+        # sensitive-site list wins if a domain ever appears in both.
+        ip  daddr @direct_v4 meta mark set ${toString markDirect}
+        ip6 daddr @direct_v6 meta mark set ${toString markDirect}
 
         ip  daddr @sc_v4 meta mark set ${toString markSc}
         ip6 daddr @sc_v6 meta mark set ${toString markSc}
@@ -198,6 +207,16 @@ in
       cache-size = 1000;
       # Sensitive sites -> sc sets. List kept OUT of the repo:
       conf-file = "/persist/secrets/vpn-sc-domains.conf";
+      # Dev-infra domains -> direct sets (public list, lives here). A bare
+      # /domain/ matches the domain AND all subdomains (cache.nixos.org via
+      # nixos.org, niri.cachix.org via cachix.org, static.crates.io, ...).
+      # Resolution itself still rides the tunnel; only the payload goes direct.
+      nftset = [
+        "/github.com/githubusercontent.com/ghcr.io/4#inet#split-tunnel#direct_v4,6#inet#split-tunnel#direct_v6"
+        "/nixos.org/cachix.org/attic.xuyh0120.win/4#inet#split-tunnel#direct_v4,6#inet#split-tunnel#direct_v6"
+        "/crates.io/rust-lang.org/4#inet#split-tunnel#direct_v4,6#inet#split-tunnel#direct_v6"
+        "/pypi.org/pythonhosted.org/4#inet#split-tunnel#direct_v4,6#inet#split-tunnel#direct_v6"
+      ];
     };
   };
   # dnsmasq needs CAP_NET_ADMIN to add elements to the nftables sets.

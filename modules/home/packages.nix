@@ -56,8 +56,6 @@ in
     sone # native Linux desktop client for TIDAL
     (maybeDirect vesktop "vesktop") # Discord -- DIRECT under VPN (voice breaks tunnelled)
     teams-for-linux # Microsoft Teams (official Linux client is discontinued)
-    inochi-creator # 2D VTuber model rigging/animation editor
-    inochi-session # runtime that drives Inochi2D puppets (face tracking) for streaming
 
     # System monitors
     fastfetch
