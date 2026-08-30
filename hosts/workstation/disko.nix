@@ -139,12 +139,21 @@
             mountpoint = "/persist";
           };
 
-          # --- Persistent: rustfs object store (fleet sccache cache).
-          #     Quota caps the never-evicting cache; contents are disposable. ---
+          # --- Persistent: rustfs object store (fleet sccache + nix caches).
+          #     Quota caps the never-evicting caches; contents are DISPOSABLE,
+          #     which licenses the perf overrides: no dedup (cache objects
+          #     never dedup, DDT cost is pure loss), 1M records (large
+          #     sequential objects), async-only (a crash at worst corrupts a
+          #     cache entry that gets re-uploaded). ---
           "safe/rustfs" = {
             type = "zfs_fs";
             mountpoint = "/var/lib/rustfs";
-            options.quota = "200G";
+            options = {
+              quota = "200G";
+              dedup = "off";
+              recordsize = "1M";
+              sync = "disabled";
+            };
           };
         };
       };
