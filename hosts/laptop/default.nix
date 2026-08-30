@@ -13,8 +13,7 @@
     inputs.niri.nixosModules.niri
     inputs.dms.nixosModules.dank-material-shell
 
-    # System modules (split by concern). NOTE: vpn.nix is intentionally NOT
-    # imported on the laptop -- ProtonVPN is off on this branch.
+    # System modules (split by concern).
     ../../modules/system/boot.nix
     ../../modules/system/kernel.nix
     ../../modules/system/zfs.nix
@@ -32,6 +31,7 @@
     ../../modules/system/timezone.nix
     ../../modules/system/sccache.nix
     ../../modules/system/sccache-builder.nix
+    ../../modules/system/vpn.nix
   ];
 
   # --- Overlays: CachyOS kernel (pinned -> max attic cache hits), niri, vicinae ---

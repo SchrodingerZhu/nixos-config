@@ -23,12 +23,47 @@
 # SECRETS: only PRIVATE KEYS + the sensitive domain list are secret. Server public
 # keys / endpoints are not. KEY EXPIRY: Proton certs expire ~1 year; renew via the
 # dashboard "Extend" (keeps keys). Check handshakes with `sudo wg show`.
-{ lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   wg = "${pkgs.wireguard-tools}/bin/wg";
 
-  address = "10.2.0.2/32";
+  address = "10.2.0.2/32"; # identical in every Proton config (per-key, not per-device)
   protonDns = "10.2.0.1";
+
+  # Per-host peers: each machine has its OWN Proton device certs — never share
+  # a cert across machines (one WG pubkey = one server-side peer tracking a
+  # single roaming endpoint; two clients on the same key repoint it with every
+  # keepalive and starve each other of return traffic).
+  #   workstation: default US-CA p2p       + sc CH-US (79.135.104.68)
+  #   manifold:    default US-NJ "mobile"  + sc CH-US#3 "mobile-sc"
+  isManifold = config.networking.hostName == "manifold";
+  protonPeer =
+    if isManifold then
+      {
+        publicKey = "6Ct2qC5B3ayxBtkV2y6ScFzYcLD/6fLmtMmHPCJTAVU="; # US-NJ#63
+        endpoint = "163.5.171.29:51820";
+      }
+    else
+      {
+        publicKey = "JtPZzImfe+HtDLTEPxsHLbOusQJfOwLyOYjNixNY0k8="; # US-CA p2p
+        endpoint = "79.127.185.251:51820";
+      };
+  scPeer =
+    if isManifold then
+      {
+        publicKey = "znjz1X8oDeciB6/JHNvbOQxIkBPvA9gP5dIXpesm+Fc="; # CH-US#3
+        endpoint = "79.135.104.22:51820";
+      }
+    else
+      {
+        publicKey = "lHEn/qdFKAZZjGWD3gAN1QBxuEZly7pSqaqRQRIW2hI="; # CH-US
+        endpoint = "79.135.104.68:51820";
+      };
 
   # We do NOT let wg-quick auto-install its full-tunnel ip-rules: it picks
   # non-deterministic priorities (seen at 0 and at 2/3 across boots) and orders
@@ -64,12 +99,11 @@ in
       postUp = "${wg} set proton fwmark ${toString markProtonWrap}";
       peers = [
         {
-          publicKey = "JtPZzImfe+HtDLTEPxsHLbOusQJfOwLyOYjNixNY0k8=";
+          inherit (protonPeer) publicKey endpoint;
           allowedIPs = [
             "0.0.0.0/0"
             "::/0"
           ];
-          endpoint = "79.127.185.251:51820";
           persistentKeepalive = 25;
         }
       ];
@@ -87,12 +121,11 @@ in
       postUp = "${wg} set proton-sc fwmark ${toString markScWrap}";
       peers = [
         {
-          publicKey = "lHEn/qdFKAZZjGWD3gAN1QBxuEZly7pSqaqRQRIW2hI=";
+          inherit (scPeer) publicKey endpoint;
           allowedIPs = [
             "0.0.0.0/0"
             "::/0"
           ];
-          endpoint = "79.135.104.68:51820";
           persistentKeepalive = 25;
         }
       ];
@@ -216,6 +249,9 @@ in
         "/nixos.org/cachix.org/attic.xuyh0120.win/4#inet#split-tunnel#direct_v4,6#inet#split-tunnel#direct_v6"
         "/crates.io/rust-lang.org/4#inet#split-tunnel#direct_v4,6#inet#split-tunnel#direct_v6"
         "/pypi.org/pythonhosted.org/4#inet#split-tunnel#direct_v4,6#inet#split-tunnel#direct_v6"
+        # geoclue's IP-fallback geolocation must see the REAL egress IP or
+        # automatic-timezoned (manifold) follows the VPN exit's timezone.
+        "/beacondb.net/4#inet#split-tunnel#direct_v4,6#inet#split-tunnel#direct_v6"
       ];
     };
   };
