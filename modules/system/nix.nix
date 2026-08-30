@@ -54,6 +54,15 @@ in
   # The daemon does the substitution/pushing -> it needs the S3 credentials.
   systemd.services.nix-daemon.environment.AWS_SHARED_CREDENTIALS_FILE = awsCreds;
 
+  # ROOT bypasses the daemon (local store) — e.g. `sudo nixos-rebuild` — and
+  # sudo strips the env var, so credential-less S3 lookups fell through to the
+  # IMDS probe (~6s timeout PER PATH). Give root the standard credentials
+  # path instead; recreated every boot (ephemeral /root).
+  systemd.tmpfiles.rules = [
+    "d /root/.aws 0700 root root -"
+    "L+ /root/.aws/credentials - - - - ${awsCreds}"
+  ];
+
   # Unfree allowed globally at the system level (home-manager uses
   # useGlobalPkgs, so it inherits this).
   nixpkgs.config.allowUnfree = true;
