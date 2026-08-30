@@ -5,7 +5,9 @@ let
   # LAN binary cache in the workstation's rustfs (see modules/system/rustfs.nix).
   # TLS trust comes from the committed CA (security.pki in sccache.nix ->
   # NIX_SSL_CERT_FILE); credentials are the shared rustfs pair.
-  nixCacheUrl = "s3://nix-cache?endpoint=192.168.0.92:9000&scheme=https&region=auto";
+  # compression=zstd: the default is single-threaded xz, which pegs one core
+  # per NAR and made pushes crawl; zstd is fast and plenty for a LAN cache.
+  nixCacheUrl = "s3://nix-cache?endpoint=192.168.0.92:9000&scheme=https&region=auto&compression=zstd";
   awsCreds = "/persist/secrets/sccache/aws-credentials";
 
   # Auto-push everything built locally; rustfs down => skip silently (|| true
