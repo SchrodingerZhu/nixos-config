@@ -32,6 +32,7 @@
     ../../modules/system/sccache.nix
     ../../modules/system/sccache-builder.nix
     ../../modules/system/vpn.nix
+    ../../modules/system/embedded-dev.nix
   ];
 
   # --- Overlays: CachyOS kernel (pinned -> max attic cache hits), niri, vicinae ---
