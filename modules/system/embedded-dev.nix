@@ -1,4 +1,6 @@
-# Embedded development: debug-probe USB access without root.
+# Embedded development (BOTH hosts): debug-probe USB access without root.
+# The RA8M2 board normally lives on the workstation now but gets plugged into
+# the laptop at times, so both hosts import this module.
 #
 # SEGGER J-Link (incl. the J-Link OB on Renesas EK boards, VID 1366) enumerates
 # as a vendor-class USB interface plus a CDC-ACM virtual COM port. The USB

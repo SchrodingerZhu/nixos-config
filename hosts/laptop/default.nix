@@ -30,7 +30,6 @@
     ../../modules/system/ups-client.nix
     ../../modules/system/timezone.nix
     ../../modules/system/sccache.nix
-    ../../modules/system/sccache-builder.nix
     ../../modules/system/vpn.nix
     ../../modules/system/embedded-dev.nix
   ];
