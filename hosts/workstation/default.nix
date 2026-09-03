@@ -39,6 +39,7 @@
     inputs.nix-cachyos-kernel.overlays.pinned
     inputs.niri.overlays.niri
     inputs.vicinae.overlays.default
+    inputs.claude-code-nix.overlays.default # claude-code ahead of nixpkgs
     # click-threading (khal -> vdirsyncer): pytest collects docs/conf.py which
     # imports the removed pkg_resources. Mirrors nixpkgs 1cb613d (2026-07-09);
     # drop once the flake pin includes it.

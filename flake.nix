@@ -43,6 +43,11 @@
     # vicinae launcher. NOT following nixpkgs -> keeps vicinae.cachix hits.
     vicinae.url = "github:vicinaehq/vicinae";
 
+    # claude-code, tracked ahead of nixpkgs (near-daily upstream releases;
+    # the nixpkgs pin lags). NOT following nixpkgs -> keeps claude-code.cachix
+    # hits. Overlay applied in both hosts' default.nix.
+    claude-code-nix.url = "github:sadjow/claude-code-nix";
+
     # Zen Browser (community flake), Twilight channel.
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";

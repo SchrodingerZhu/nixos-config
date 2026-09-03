@@ -37,6 +37,7 @@ in
       "https://attic.xuyh0120.win/lantian" # CachyOS kernel + zfs_cachyos
       "https://niri.cachix.org" # niri
       "https://vicinae.cachix.org" # vicinae launcher
+      "https://claude-code.cachix.org" # claude-code (sadjow/claude-code-nix)
     ];
     trusted-public-keys = [
       "rustfs-nix-1:vljOeYpwlqy6/6YgzAJANzN0DzXNCXbCYtOcWNNMxs8=" # LAN rustfs cache
@@ -44,6 +45,7 @@ in
       "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc="
       "niri.cachix.org-1:Wv0OmO7PsuocRKzfDoJ3mulSl7Z6oezYhGhR+3W2964="
       "vicinae.cachix.org-1:1kDrfienkGHPYbkpNj1mWTr7Fm1+zcenzgTizIcI3oc="
+      "claude-code.cachix.org-1:YeXf2aNu7UTX8Vwrze0za1WEDS+4DuI2kVeWEE4fsRk="
     ];
 
     # Sign local builds so both machines accept each other's pushes.
