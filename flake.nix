@@ -43,10 +43,11 @@
     # vicinae launcher. NOT following nixpkgs -> keeps vicinae.cachix hits.
     vicinae.url = "github:vicinaehq/vicinae";
 
-    # claude-code, tracked ahead of nixpkgs (near-daily upstream releases;
-    # the nixpkgs pin lags). NOT following nixpkgs -> keeps claude-code.cachix
-    # hits. Overlay applied in both hosts' default.nix.
-    claude-code-nix.url = "github:sadjow/claude-code-nix";
+    # AI coding agents (claude-code, codex, ...) tracked ahead of nixpkgs;
+    # numtide rebuilds daily against its own nixpkgs-unstable pin. NOT following
+    # nixpkgs -> keeps cache.numtide.com hits (following would rebuild from
+    # source). Consumed via a small overlay in both hosts' default.nix.
+    llm-agents.url = "github:numtide/llm-agents.nix";
 
     # Zen Browser (community flake), Twilight channel.
     zen-browser = {

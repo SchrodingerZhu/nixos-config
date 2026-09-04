@@ -39,7 +39,15 @@
     inputs.nix-cachyos-kernel.overlays.pinned
     inputs.niri.overlays.niri
     inputs.vicinae.overlays.default
-    inputs.claude-code-nix.overlays.default # claude-code ahead of nixpkgs
+    # claude-code / codex from numtide/llm-agents.nix (daily updates, cached).
+    # Taken from its packages output, not overlays.shared-nixpkgs, so the
+    # binaries match what numtide's CI pushed to cache.numtide.com.
+    (final: prev: {
+      inherit (inputs.llm-agents.packages.${prev.stdenv.hostPlatform.system})
+        claude-code
+        codex
+        ;
+    })
     # click-threading (khal -> vdirsyncer): pytest collects docs/conf.py which
     # imports the removed pkg_resources. Mirrors nixpkgs 1cb613d (2026-07-09);
     # drop once the flake pin includes it.
