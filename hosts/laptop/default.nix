@@ -39,13 +39,14 @@
     inputs.nix-cachyos-kernel.overlays.pinned
     inputs.niri.overlays.niri
     inputs.vicinae.overlays.default
-    # claude-code / codex from numtide/llm-agents.nix (daily updates, cached).
+    # claude-code / codex / chatgpt from numtide/llm-agents.nix (cached).
     # Taken from its packages output, not overlays.shared-nixpkgs, so the
     # binaries match what numtide's CI pushed to cache.numtide.com.
     (final: prev: {
       inherit (inputs.llm-agents.packages.${prev.stdenv.hostPlatform.system})
         claude-code
         codex
+        chatgpt
         ;
     })
     # click-threading (khal -> vdirsyncer): pytest collects docs/conf.py which
