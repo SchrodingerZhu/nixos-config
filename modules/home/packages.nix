@@ -49,6 +49,7 @@ in
     claude-code
     codex
     chatgpt # ChatGPT desktop client (Linux build from llm-agents.nix).
+    bubblewrap # Provides bwrap for the ChatGPT sandbox.
     vscode # Insiders isn't packaged in nixpkgs; using stable.
     gh # GitHub CLI
     obs-studio # screen capture via the gnome ScreenCast portal (see xdg.portal)
