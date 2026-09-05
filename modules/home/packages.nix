@@ -59,7 +59,15 @@ in
     (maybeDirect vesktop "vesktop") # Discord -- DIRECT under VPN (voice breaks tunnelled)
     teams-for-linux # Microsoft Teams (official Linux client is discontinued)
 
+    # Desktop utilities
+    cosmic-files
+    cosmic-edit
+    cosmic-player
+    cosmic-reader
+    loupe # GNOME image viewer; Noctua is not packaged in our nixpkgs pin.
+
     # System monitors
+    cosmic-monitor
     fastfetch
     btop
     htop
