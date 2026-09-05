@@ -60,6 +60,7 @@ in
     teams-for-linux # Microsoft Teams (official Linux client is discontinued)
 
     # Desktop utilities
+    waypipe # Forward Wayland applications over SSH.
     cosmic-files
     cosmic-edit
     cosmic-player
