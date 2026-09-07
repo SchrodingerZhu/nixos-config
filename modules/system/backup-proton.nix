@@ -71,9 +71,9 @@ in
     initialize = true; # `restic init` on first run
     inhibitsSleep = true; # laptop: don't suspend mid-upload
     # One "[elapsed] N% done, X/Y GiB, ETA" status line in the journal every
-    # 10 minutes (restic only shows progress on a TTY otherwise). Needs the
+    # 30 s (restic only shows progress on a TTY otherwise). Needs the
     # pre-scan for the percentage/ETA, so --no-scan is deliberately NOT set.
-    progressFps = 1.0 / 600;
+    progressFps = 1.0 / 30;
 
     # Frozen views of the datasets (see prepare/cleanup below).
     paths = [
