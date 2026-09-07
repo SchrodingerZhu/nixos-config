@@ -39,6 +39,24 @@
 }:
 let
   zfs = lib.getExe' config.boot.zfs.package "zfs";
+
+  # rclone >= 1.75.1 is REQUIRED for the Proton Drive backend: 1.75.0 (the
+  # current nixpkgs pin) "corrupts uploads after a retried upload error" and
+  # writes files "not readable in the Proton apps" (both fixed in 1.75.1,
+  # 2026-09-04). Retried uploads are the norm against Proton's storage nodes,
+  # so 1.75.0 is unusable for backups. Drop this override once nixpkgs >= 1.75.1.
+  rcloneProton = pkgs.rclone.overrideAttrs (old: {
+    version = "1.75.1";
+    src = pkgs.fetchFromGitHub {
+      owner = "rclone";
+      repo = "rclone";
+      tag = "v1.75.1";
+      hash = "sha256-d2WGx9Rplf7nrUZbYRYJffPKB7Fk0OZc9o3TUVoaG50=";
+    };
+    vendorHash = "sha256-3HkOymYmr3JFG/Cs8GKHImRioQaHbiI3MEJR1ZPhbu8=";
+  });
+
+  unit = "restic-backups-proton";
   datasets = [
     "rpool/safe/persist"
     "rpool/safe/home"
@@ -132,8 +150,14 @@ in
 
   systemd.services.restic-backups-proton = {
     # restic shells out to `rclone serve restic --stdio`; the module doesn't add it.
-    path = [ pkgs.rclone ];
+    path = [ rcloneProton ];
     serviceConfig = {
+      # Proton's storage nodes fail often enough that a whole run can die after
+      # restic/rclone exhaust their own retries. Retry the run itself (restic
+      # resumes from the uploaded packs); on-failure is the only Restart= mode
+      # valid for a oneshot. A hang (no error) is handled by the watchdog below.
+      Restart = "on-failure";
+      RestartSec = "15min";
       # Uploads bypass the ProtonVPN tunnel: sockets with gid `novpn` are marked
       # direct by the split-tunnel nftables chain (modules/system/vpn.nix). The
       # service still runs as root; only its primary group changes.
@@ -141,6 +165,51 @@ in
       Nice = 10;
       IOSchedulingClass = "best-effort";
       IOSchedulingPriority = 7;
+    };
+  };
+
+  # ---- stall watchdog ------------------------------------------------------
+  # rclone's Proton client has been seen to hang silently (no request in
+  # flight, no error, no retry) for good; no timeout in restic or rclone covers
+  # that. Every 5 min compare the unit's IP byte counters (in+out, so the
+  # download-heavy `check` phase counts too) with the previous sample; after 3
+  # unchanged samples (15 min) while the main process is running, restart the
+  # unit. Uploaded packs are kept, so a restart costs a local re-hash only.
+  systemd.services."${unit}-watchdog" = {
+    description = "Restart ${unit} if its network traffic has stalled";
+    serviceConfig.Type = "oneshot";
+    path = [
+      pkgs.systemd
+      pkgs.coreutils
+    ];
+    script = ''
+      state=/run/${unit}-watchdog
+      mkdir -p "$state"
+      sub=$(systemctl show ${unit} -p SubState --value)
+      if [ "$sub" != "start" ]; then
+        rm -f "$state/last" "$state/strikes"; exit 0   # not in the main phase
+      fi
+      inv=$(systemctl show ${unit} -p InvocationID --value)
+      in=$(systemctl show ${unit} -p IPIngressBytes --value)
+      out=$(systemctl show ${unit} -p IPEgressBytes --value)
+      cur="$inv $((in + out))"
+      last=$(cat "$state/last" 2>/dev/null || true)
+      strikes=$(cat "$state/strikes" 2>/dev/null || echo 0)
+      if [ "$cur" = "$last" ]; then strikes=$((strikes + 1)); else strikes=0; fi
+      echo "$cur" > "$state/last"; echo "$strikes" > "$state/strikes"
+      if [ "$strikes" -ge 3 ]; then
+        echo "no traffic for $((strikes * 5)) min -> restarting ${unit}"
+        rm -f "$state/last" "$state/strikes"
+        systemctl restart --no-block ${unit}
+      fi
+    '';
+  };
+  systemd.timers."${unit}-watchdog" = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "5min";
+      OnUnitActiveSec = "5min";
+      AccuracySec = "30s";
     };
   };
 }

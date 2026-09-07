@@ -66,5 +66,11 @@ sudo systemctl start restic-backups-proton     # run now; first seed takes days
 journalctl -fu restic-backups-proton
 ```
 
+Robustness: rclone is pinned to >= 1.75.1 in the module (1.75.0 corrupts
+retried uploads); the unit restarts itself on failure (15 min) and a 5-min
+watchdog timer restarts it when its network counters stall for 15 min. Manual
+runs: `sudo systemctl start --no-block restic-backups-proton` (a plain start/
+restart blocks until the run ends).
+
 New host: copy both secret files over (strip `client_*` lines from `rclone.conf`
 so the host does its own login), rebuild, start the unit once.
