@@ -134,6 +134,10 @@ in
     # restic shells out to `rclone serve restic --stdio`; the module doesn't add it.
     path = [ pkgs.rclone ];
     serviceConfig = {
+      # Uploads bypass the ProtonVPN tunnel: sockets with gid `novpn` are marked
+      # direct by the split-tunnel nftables chain (modules/system/vpn.nix). The
+      # service still runs as root; only its primary group changes.
+      Group = "novpn";
       Nice = 10;
       IOSchedulingClass = "best-effort";
       IOSchedulingPriority = 7;
