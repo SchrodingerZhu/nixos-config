@@ -52,6 +52,10 @@ in
     rcloneConfigFile = "/persist/secrets/rclone.conf";
     initialize = true; # `restic init` on first run
     inhibitsSleep = true; # laptop: don't suspend mid-upload
+    # One "[elapsed] N% done, X/Y GiB, ETA" status line in the journal every
+    # 10 minutes (restic only shows progress on a TTY otherwise). Needs the
+    # pre-scan for the percentage/ETA, so --no-scan is deliberately NOT set.
+    progressFps = 1.0 / 600;
 
     # Frozen views of the datasets (see prepare/cleanup below).
     paths = [
@@ -74,7 +78,6 @@ in
       "--exclude-caches" # honours CACHEDIR.TAG (cargo target/, pip, etc.)
       "--compression max" # upload bandwidth is the bottleneck, not CPU
       "--pack-size 64" # fewer, larger objects -> fewer Proton API calls
-      "--no-scan" # skip the pre-scan pass over 100+ GB
     ];
 
     timerConfig = {
