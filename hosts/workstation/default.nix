@@ -26,6 +26,7 @@
     ../../modules/system/cowrie.nix
     ../../modules/system/vpn.nix
     ../../modules/system/zrepl.nix
+    ../../modules/system/backup-proton.nix
     ../../modules/system/ddc.nix
     ../../modules/system/ups-server.nix
     ../../modules/system/zfs-usb-unlock.nix

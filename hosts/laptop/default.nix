@@ -25,6 +25,7 @@
     ../../modules/system/sshd.nix
     ../../modules/system/cowrie.nix
     ../../modules/system/zrepl.nix
+    ../../modules/system/backup-proton.nix
     ../../modules/system/laptop.nix
     ../../modules/system/ddc.nix
     ../../modules/system/ups-client.nix

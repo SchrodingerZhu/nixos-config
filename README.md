@@ -23,13 +23,15 @@ AMD Ryzen 9 9950X (Zen 5, RDNA2 iGPU) workstation. Flake-based, tracking
 - **Hardening:** native nftables firewall, Ananicy-cpp, systemd-oomd + zram,
   AppArmor.
 - **Snapshots:** zrepl local snap+prune (home + persist).
+- **Off-site backup:** restic -> rclone -> Proton Drive, Mon+Thu 03:00, one repo
+  per host, client-side AES-256 + zstd (see below).
 
 ## Layout
 
 - `flake.nix`
 - `hosts/workstation/{default,disko,hardware}.nix`
 - `modules/system/*` — boot, kernel, zfs, impermanence, nix, fonts, hardening,
-  network, zrepl
+  network, zrepl, backup-proton
 - `modules/home/*` — niri, dms, wezterm, shell, browser, vicinae, keepassxc, ssh
 
 ## Rebuild
@@ -39,3 +41,30 @@ sudo nixos-rebuild switch --flake /etc/nixos#schrodingerzy
 ```
 
 `/etc/nixos` is a bind mount of `/persist/etc/nixos` (this git repo).
+
+## Off-site backup (Proton Drive)
+
+`modules/system/backup-proton.nix`: `services.restic.backups.proton` on both
+hosts. Each run snapshots `rpool/safe/{persist,home}@restic`, backs up the frozen
+`.zfs/snapshot/restic` views (excluding `~/.cache`, Steam, podman images, cargo
+registry, ...), prunes (14d / 8w / 6m), runs `restic check` on a 2% data sample,
+then destroys the snapshot. Repository: `rclone:protondrive:backups/restic/<host>`.
+
+Secrets live in `/persist/secrets` (0600, not in git):
+
+- `rclone.conf` -- `[protondrive]` remote (username, obscured password,
+  `otp_secret_key` for unattended TOTP; rclone caches `client_*` session tokens
+  in place, so the file must stay writable).
+- `restic-password` -- repository key. **Keep a copy in KeePassXC**: the backup
+  contains `/persist/secrets` itself, so it is the one thing that must survive
+  outside the machine.
+
+```bash
+restic-proton snapshots                        # wrapper with repo/creds preset
+restic-proton restore latest:/home/.zfs/snapshot/restic --target /home
+sudo systemctl start restic-backups-proton     # run now; first seed takes days
+journalctl -fu restic-backups-proton
+```
+
+New host: copy both secret files over (strip `client_*` lines from `rclone.conf`
+so the host does its own login), rebuild, start the unit once.
