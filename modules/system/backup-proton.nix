@@ -56,6 +56,11 @@ let
     vendorHash = "sha256-3HkOymYmr3JFG/Cs8GKHImRioQaHbiI3MEJR1ZPhbu8=";
   });
 
+  # nixpkgs wraps the restic binary with ITS rclone prepended to PATH
+  # (postInstall: wrapProgram --prefix PATH), which silently overrides the
+  # unit's `path`. Rebuild restic against the pinned rclone instead.
+  resticProton = pkgs.restic.override { rclone = rcloneProton; };
+
   unit = "restic-backups-proton";
   datasets = [
     "rpool/safe/persist"
@@ -68,6 +73,7 @@ in
     repository = "rclone:protondrive:backups/restic/${config.networking.hostName}";
     passwordFile = "/persist/secrets/restic-password";
     rcloneConfigFile = "/persist/secrets/rclone.conf";
+    package = resticProton;
     initialize = true; # `restic init` on first run
     inhibitsSleep = true; # laptop: don't suspend mid-upload
     # One "[elapsed] N% done, X/Y GiB, ETA" status line in the journal every
@@ -149,7 +155,8 @@ in
   };
 
   systemd.services.restic-backups-proton = {
-    # restic shells out to `rclone serve restic --stdio`; the module doesn't add it.
+    # restic shells out to `rclone serve restic --stdio`; belt and braces next
+    # to the wrapper above (the wrapper's --prefix is what actually decides).
     path = [ rcloneProton ];
     serviceConfig = {
       # Proton's storage nodes fail often enough that a whole run can die after
