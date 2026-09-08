@@ -158,6 +158,15 @@ in
     # restic shells out to `rclone serve restic --stdio`; belt and braces next
     # to the wrapper above (the wrapper's --prefix is what actually decides).
     path = [ rcloneProton ];
+    # Cap the Restart= loop: the initial start + 2 retries per 6 h window, then
+    # the unit stays failed until the next timer elapse. Without this a
+    # PERSISTENT failure (e.g. `check` finding damaged packs, which no retry
+    # can fix) re-runs the whole chain -- backup included -- every 15 min for
+    # ever, minting a snapshot and downloading ~1 GiB of check data each time
+    # (seen 2026-09-08: 37 restarts overnight). After the cap trips,
+    # `systemctl reset-failed restic-backups-proton` re-arms manual starts.
+    startLimitIntervalSec = 6 * 3600;
+    startLimitBurst = 3;
     serviceConfig = {
       # Proton's storage nodes fail often enough that a whole run can die after
       # restic/rclone exhaust their own retries. Retry the run itself (restic
