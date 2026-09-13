@@ -3,8 +3,7 @@
 { pkgs, lib, ... }:
 let
   dataDir = "/var/lib/seaweedfs";
-  # RustFS continues serving :9000 until the cache copy and client checks pass.
-  s3Port = 9002;
+  s3Port = 9000;
   weed = "${pkgs.seaweedfs}/bin/weed";
   service =
     {
@@ -151,7 +150,7 @@ in
       RuntimeDirectory = "seaweedfs-s3";
       RuntimeDirectoryMode = "0700";
       # PID 1 reads root-owned material; the service receives private copies.
-      # These TLS files remain shared with RustFS until its retirement.
+      # The existing fleet certificate and key persist across system rebuilds.
       LoadCredential = [
         "aws-credentials:/persist/secrets/sccache/aws-credentials"
         "tls.crt:/persist/secrets/rustfs-tls/rustfs_cert.pem"
