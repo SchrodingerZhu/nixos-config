@@ -1,25 +1,11 @@
-# sccache client side (BOTH hosts): shared S3 compile cache on the
-# workstation's SeaweedFS (modules/system/seaweedfs.nix).
-#
-# RUSTC_WRAPPER/CARGO_INCREMENTAL are set GLOBALLY below (operator choice):
-# every cargo build on these machines caches with no per-project setup.
-# Trade-offs: incremental compilation is off everywhere (cold rebuilds are
-# what the cache accelerates), and builds need SeaweedFS reachable — to build
-# fully locally in a pinch: `env -u RUSTC_WRAPPER cargo build`.
-# Inspect with `sccache --show-stats`.
-#
-# The S3 settings ride global env vars (below). S3 credentials:
-# AWS_SHARED_CREDENTIALS_FILE points at /persist/secrets/sccache/aws-credentials
-# — override per-shell if real AWS credentials are ever needed.
-#
-# Caveat: with SCCACHE_BUCKET set globally, an sccache daemon started while
-# SeaweedFS is unreachable fails to init its backend — `unset SCCACHE_BUCKET`
-# (or stop using the wrapper) to build with SeaweedFS down.
+# Shared S3 compiler cache for both hosts.
+# Cargo uses sccache globally with incremental compilation disabled.
+# Use `env -u RUSTC_WRAPPER cargo build` when the cache is unavailable.
 { pkgs, ... }:
 {
   environment.systemPackages = [ pkgs.sccache ];
 
-  # Trust the private CA that signs the SeaweedFS TLS leaf (public cert, in git).
+  # Trust the cache server's private CA.
   security.pki.certificateFiles = [ ./rustfs-ca.crt ];
 
   environment.variables = {

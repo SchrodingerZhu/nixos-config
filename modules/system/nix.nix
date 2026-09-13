@@ -1,17 +1,12 @@
-# Nix daemon settings: flakes, unfree, pinned registry/nixPath, binary caches,
-# weekly GC, and the LAN binary cache on the workstation's SeaweedFS.
+# Shared Nix settings and LAN binary cache.
 { inputs, pkgs, ... }:
 let
-  # LAN binary cache in the workstation's SeaweedFS (see modules/system/seaweedfs.nix).
-  # TLS trust comes from the committed CA (security.pki in sccache.nix ->
-  # NIX_SSL_CERT_FILE); credentials are the shared cache pair.
-  # compression=zstd: the default is single-threaded xz, which pegs one core
-  # per NAR and made pushes crawl; zstd is fast and plenty for a LAN cache.
+  # TLS trust is configured in sccache.nix.
+  # zstd keeps compression overhead low for LAN uploads.
   nixCacheUrl = "s3://nix-cache?endpoint=192.168.0.92:9000&scheme=https&region=auto&compression=zstd";
   awsCreds = "/persist/secrets/sccache/aws-credentials";
 
-  # Auto-push everything built locally; SeaweedFS down => skip silently (|| true
-  # + timeout) so builds are never blocked by the cache being unreachable.
+  # Cache upload failures do not fail local builds.
   postBuildPush = pkgs.writeShellScript "nix-cache-push" ''
     export AWS_SHARED_CREDENTIALS_FILE=${awsCreds}
     ${pkgs.coreutils}/bin/timeout 120 \
@@ -29,9 +24,7 @@ in
     trusted-users = [ "root" "schrodingerzy" ];
 
     substituters = [
-      # LAN SeaweedFS cache first (priority beats cache.nixos.org's 40); with the
-      # 5s connect-timeout an unreachable cache degrades to a warning, never
-      # an error — safe when manifold roams off the LAN.
+      # Prefer the LAN cache, with public caches as fallbacks.
       "${nixCacheUrl}&priority=30"
       "https://cache.nixos.org"
       "https://attic.xuyh0120.win/lantian" # CachyOS kernel + zfs_cachyos
@@ -48,20 +41,17 @@ in
       "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
     ];
 
-    # Sign local builds so both machines accept each other's pushes.
-    # Key NOT in git: /persist/secrets/nix-cache-key.pem (same pair on both).
+    # Both hosts use the same key to sign local builds.
     secret-key-files = [ "/persist/secrets/nix-cache-key.pem" ];
     connect-timeout = 5;
     post-build-hook = postBuildPush;
   };
 
-  # The daemon does the substitution/pushing -> it needs the S3 credentials.
+  # The Nix daemon needs the shared S3 credentials.
   systemd.services.nix-daemon.environment.AWS_SHARED_CREDENTIALS_FILE = awsCreds;
 
-  # ROOT bypasses the daemon (local store) — e.g. `sudo nixos-rebuild` — and
-  # sudo strips the env var, so credential-less S3 lookups fell through to the
-  # IMDS probe (~6s timeout PER PATH). Give root the standard credentials
-  # path instead; recreated every boot (ephemeral /root).
+  # Root accesses the store directly and needs default AWS credentials.
+  # Recreate the credentials link after each ephemeral-root reset.
   systemd.tmpfiles.rules = [
     "d /root/.aws 0700 root root -"
     "L+ /root/.aws/credentials - - - - ${awsCreds}"

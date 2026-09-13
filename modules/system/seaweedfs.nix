@@ -1,5 +1,4 @@
-# Workstation S3 cache. The client endpoint and shared credentials are configured
-# in sccache.nix and nix.nix. All mutable state lives on a dedicated ZFS dataset.
+# Workstation S3 cache with persistent master, volume, and filer state.
 { pkgs, lib, ... }:
 let
   dataDir = "/var/lib/seaweedfs";
@@ -156,8 +155,6 @@ in
     extraServiceConfig = {
       RuntimeDirectory = "seaweedfs-s3";
       RuntimeDirectoryMode = "0700";
-      # PID 1 reads root-owned material; the service receives private copies.
-      # The existing fleet certificate and key persist across system rebuilds.
       LoadCredential = [
         "aws-credentials:/persist/secrets/sccache/aws-credentials"
         "tls.crt:/persist/secrets/rustfs-tls/rustfs_cert.pem"
