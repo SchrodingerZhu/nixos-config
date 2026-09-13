@@ -32,6 +32,7 @@
     ../../modules/system/ups-server.nix
     ../../modules/system/zfs-usb-unlock.nix
     ../../modules/system/rustfs.nix
+    ../../modules/system/seaweedfs.nix
     ../../modules/system/sccache.nix
     ../../modules/system/embedded-dev.nix
   ];

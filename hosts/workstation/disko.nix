@@ -139,6 +139,19 @@
             mountpoint = "/persist";
           };
 
+          # S3 cache data and metadata; mounted before the services can start.
+          "safe/seaweedfs" = {
+            type = "zfs_fs";
+            mountpoint = "/var/lib/seaweedfs";
+            options = {
+              quota = "200G";
+              compression = "zstd";
+              dedup = "off";
+              recordsize = "128K";
+              sync = "standard";
+            };
+          };
+
           # --- Persistent: rustfs object store (fleet sccache + nix caches).
           #     Quota caps the never-evicting caches; contents are DISPOSABLE,
           #     which licenses the perf overrides: no dedup (cache objects
