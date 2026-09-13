@@ -61,6 +61,13 @@ in
   environment.systemPackages = [ pkgs.seaweedfs ];
   networking.firewall.allowedTCPPorts = [ s3Port ];
 
+  # PID 1 loads the TLS credentials; no service group needs direct access.
+  systemd.tmpfiles.rules = [
+    "z /persist/secrets/rustfs-tls 0700 root root -"
+    "z /persist/secrets/rustfs-tls/rustfs_cert.pem 0600 root root -"
+    "z /persist/secrets/rustfs-tls/rustfs_key.pem 0600 root root -"
+  ];
+
   environment.etc."seaweedfs/filer.toml".text = ''
     [leveldb2]
     enabled = true
