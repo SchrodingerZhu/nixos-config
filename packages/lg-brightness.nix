@@ -23,7 +23,7 @@ rustPlatform.buildRustPackage {
   postInstall = ''
     mkdir -p $out/lib/udev/rules.d
     cat > $out/lib/udev/rules.d/70-lg-ultrafine.rules <<'EOF'
-    ACTION=="add|change", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="043e", ATTR{idProduct}=="9a40|9a63|9a70", TAG+="uaccess"
+    ACTION!="remove", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="043e", ATTR{idProduct}=="9a40|9a63|9a70", TAG+="uaccess"
     EOF
   '';
 
