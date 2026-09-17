@@ -52,6 +52,7 @@ in
     bubblewrap # Provides bwrap for the ChatGPT sandbox.
     vscode # Insiders isn't packaged in nixpkgs; using stable.
     gh # GitHub CLI
+    gnupg
     obs-studio # screen capture via the gnome ScreenCast portal (see xdg.portal)
     (maybeDirect taterclient-ddnet "TaterClient-DDNet") # DDNet -- DIRECT under VPN (UDP breaks tunnelled)
     telegram-desktop
