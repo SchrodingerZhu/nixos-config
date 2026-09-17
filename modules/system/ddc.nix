@@ -1,24 +1,45 @@
-# DDC/CI brightness for EXTERNAL monitors — ddcutil/i2c-dev userspace path
-# ONLY. The internal panel keeps its amdgpu backlight.
-#
-# HISTORY (do not re-add ddcci-driver here): the first version loaded the
-# ddcci/ddcci-backlight kernel modules and instantiated ddcci clients at 0x37
-# on every "AMDGPU DM i2c" bus at boot. On the Z13 (Strix Halo) that touched
-# the INTERNAL eDP panel's DDC bus too and wedged amdgpu's display engine —
-# PSR warnings from the vblank worker, black internal panel at the greeter,
-# external output dropping after login, system-wide sluggishness, and one
-# hard crash. None of the probes even bound (-19). If a kernel backlight
-# for externals is ever wanted again, it must be scoped to CONNECTED
-# non-eDP connectors via /sys/class/drm/<conn>/ddc — never a bus sweep.
-#
-# What remains: /dev/i2c-* access so ddcutil can drive external monitors'
-# brightness on demand (e.g. `ddcutil setvcp 10 60`), and for anything else
-# (DMS) that knows how to use ddcutil. ddcutil skips eDP panels by design.
-{ pkgs, ... }:
+# External display brightness controls.
+{ pkgs, lib, ... }:
 {
-  # /dev/i2c-* (group i2c) for unprivileged DDC/CI access.
+  nixpkgs.overlays = [
+    (final: prev: {
+      ddcutil =
+        if lib.versionOlder prev.ddcutil.version "3.0.1" then
+          prev.ddcutil.overrideAttrs (_: {
+            version = "3.0.1";
+            src = final.fetchurl {
+              url = "https://www.ddcutil.com/tarballs/ddcutil-3.0.1.tar.gz";
+              hash = "sha256-HIYtwmOqKV8j2o2aZpNIfUzYyXqRveqkcRyrKKM83W4=";
+            };
+          })
+        else
+          prev.ddcutil;
+
+      # sync with latest upstream firmware
+      linux-firmware =
+        if lib.versionOlder prev.linux-firmware.version "20260916" then
+          prev.linux-firmware.overrideAttrs (_: {
+            version = "20260916";
+            src = final.fetchFromGitLab {
+              owner = "kernel-firmware";
+              repo = "linux-firmware";
+              tag = "20260916";
+              hash = "sha256-VbDTRN/i+a1BrKnDtdDFxanp3BQujBhe9CyWay9GTXY=";
+            };
+          })
+        else
+          prev.linux-firmware;
+
+      lg-brightness = final.callPackage ../../packages/lg-brightness.nix { };
+    })
+  ];
+
   hardware.i2c.enable = true;
   users.users.schrodingerzy.extraGroups = [ "i2c" ];
 
-  environment.systemPackages = [ pkgs.ddcutil ];
+  environment.systemPackages = [
+    pkgs.ddcutil
+    pkgs.lg-brightness
+  ];
+  services.udev.packages = [ pkgs.lg-brightness ];
 }

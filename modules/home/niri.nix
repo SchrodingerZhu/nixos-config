@@ -6,17 +6,40 @@
 # spawn it here. KeePassXC and fcitx5 are spawned at startup.
 { config, pkgs, ... }:
 let
-  # Step EVERY backlight device by the given delta ("5%+"/"5%-"): the internal
-  # amdgpu panel plus any external monitor exposed by ddcci-backlight
-  # (modules/system/ddc.nix). -e4: exponential (perceptual) mapping — linear %
-  # crams all visible dimming into the bottom of the 0-65535 range.
-  brightnessStepAll = pkgs.writeShellScript "brightness-step-all" ''
-    ${pkgs.brightnessctl}/bin/brightnessctl -m -l -c backlight \
-      | ${pkgs.coreutils}/bin/cut -d, -f1 \
-      | while read -r dev; do
-          ${pkgs.brightnessctl}/bin/brightnessctl -e4 -d "$dev" set "$1" >/dev/null
-        done
-  '';
+  brightnessStepAll = pkgs.writeShellApplication {
+    name = "brightness-step-all";
+    runtimeInputs = [
+      pkgs.brightnessctl
+      pkgs.coreutils
+      pkgs.util-linux
+      pkgs.lg-brightness
+    ];
+    text = ''
+      case "''${1:-}" in
+        up) delta="5%+"; lg_action=inc ;;
+        down) delta="5%-"; lg_action=dec ;;
+        *) echo "Usage: brightness-step-all up|down" >&2; exit 2 ;;
+      esac
+
+      exec 9>"$XDG_RUNTIME_DIR/brightness-step.lock"
+      flock 9
+
+      brightnessctl -m -l -c backlight | cut -d, -f1 | while read -r dev; do
+        brightnessctl -e4 -d "$dev" set "$delta" >/dev/null
+      done
+
+      for device in /sys/bus/usb/devices/*; do
+        [[ -r "$device/idVendor" && -r "$device/idProduct" ]] || continue
+        [[ $(< "$device/idVendor") == 043e ]] || continue
+        case "$(< "$device/idProduct")" in
+          9a40|9a63|9a70)
+            lg-brightness "$lg_action" 5
+            break
+            ;;
+        esac
+      done
+    '';
+  };
 in
 {
   programs.niri.package = pkgs.niri-unstable;
@@ -123,12 +146,12 @@ in
       "Mod+8".action = focus-workspace 8;
       "Mod+9".action = focus-workspace 9;
 
-      # Media / brightness keys (PipeWire + brightnessctl)
+      # Media / brightness keys
       "XF86AudioRaiseVolume".action = spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%+";
       "XF86AudioLowerVolume".action = spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-";
       "XF86AudioMute".action = spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle";
-      "XF86MonBrightnessUp".action = spawn "${brightnessStepAll}" "5%+";
-      "XF86MonBrightnessDown".action = spawn "${brightnessStepAll}" "5%-";
+      "XF86MonBrightnessUp".action = spawn "${brightnessStepAll}/bin/brightness-step-all" "up";
+      "XF86MonBrightnessDown".action = spawn "${brightnessStepAll}/bin/brightness-step-all" "down";
 
       # Session
       "Mod+Shift+Slash".action = show-hotkey-overlay;
