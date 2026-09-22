@@ -16,6 +16,7 @@
     # System modules (split by concern)
     ../../modules/system/boot.nix
     ../../modules/system/kernel.nix
+    ../../modules/system/sched-ext.nix
     ../../modules/system/zfs.nix
     ../../modules/system/impermanence.nix
     ../../modules/system/nix.nix
