@@ -40,26 +40,10 @@
 let
   zfs = lib.getExe' config.boot.zfs.package "zfs";
 
-  # rclone >= 1.75.1 is REQUIRED for the Proton Drive backend: 1.75.0 (the
-  # current nixpkgs pin) "corrupts uploads after a retried upload error" and
-  # writes files "not readable in the Proton apps" (both fixed in 1.75.1,
-  # 2026-09-04). Retried uploads are the norm against Proton's storage nodes,
-  # so 1.75.0 is unusable for backups. Drop this override once nixpkgs >= 1.75.1.
-  rcloneProton = pkgs.rclone.overrideAttrs (old: {
-    version = "1.75.1";
-    src = pkgs.fetchFromGitHub {
-      owner = "rclone";
-      repo = "rclone";
-      tag = "v1.75.1";
-      hash = "sha256-d2WGx9Rplf7nrUZbYRYJffPKB7Fk0OZc9o3TUVoaG50=";
-    };
-    vendorHash = "sha256-3HkOymYmr3JFG/Cs8GKHImRioQaHbiI3MEJR1ZPhbu8=";
-  });
-
-  # nixpkgs wraps the restic binary with ITS rclone prepended to PATH
-  # (postInstall: wrapProgram --prefix PATH), which silently overrides the
-  # unit's `path`. Rebuild restic against the pinned rclone instead.
-  resticProton = pkgs.restic.override { rclone = rcloneProton; };
+  # Nixpkgs now includes rclone >= 1.75.1, with the Proton Drive retry fixes.
+  # Use its matching restic wrapper instead of maintaining a separate pin.
+  rcloneProton = pkgs.rclone;
+  resticProton = pkgs.restic;
 
   unit = "restic-backups-proton";
   datasets = [

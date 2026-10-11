@@ -40,7 +40,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # vicinae launcher. NOT following nixpkgs -> keeps vicinae.cachix hits.
+    # Vicinae launcher; its overlay builds against the host nixpkgs for graphics compatibility.
     vicinae.url = "github:vicinaehq/vicinae";
 
     # AI coding agents (claude-code, codex, ...) tracked ahead of nixpkgs;

@@ -16,9 +16,9 @@
 # NOT in git; /persist/secrets is .gitignored and survives the ephemeral-root
 # wipe); only the generic set names (sc_v4/sc_v6) appear in this repo.
 #
-# DNS: dnsmasq is the system resolver (127.0.0.1), forwarding ONLY to Proton's
-# 10.2.0.1 over the default tunnel (no-resolv => never the ISP). Port 53 is exempt
-# from marking so resolution always rides the default tunnel.
+# DNS: ordinary applications use dnsmasq -> Proton's 10.2.0.1 over the VPN.
+# Applications in novpn (including `direct`) have loopback DNS redirected to
+# a separate resolver using NetworkManager's current upstream DNS directly.
 #
 # SECRETS: only PRIVATE KEYS + the sensitive domain list are secret. Server public
 # keys / endpoints are not. KEY EXPIRY: Proton certs expire ~1 year; renew via the
@@ -80,6 +80,20 @@ let
 
   bypassGroup = "novpn";
   gidNovpn = 3300; # pinned so nftables can match by numeric gid
+  directDnsPort = 5354;
+  directDnsConfig = pkgs.writeText "dnsmasq-direct.conf" ''
+    port=${toString directDnsPort}
+    listen-address=127.0.0.1,::1
+    bind-interfaces
+    # Poll the physical network's DNS, including changes when roaming.
+    # Never use /etc/resolv.conf here: it points back to the VPN resolver.
+    resolv-file=/run/NetworkManager/no-stub-resolv.conf
+    no-hosts
+    cache-size=1000
+    clear-on-reload
+    pid-file=
+    log-facility=-
+  '';
 in
 {
   # asymmetric replies from the policy-routed secure-core tunnel need loose rpf
@@ -144,7 +158,9 @@ in
       chain mark_dst {
         type route hook output priority mangle; policy accept;
 
-        # DNS always rides the default tunnel to reach 10.2.0.1.
+        # Explicit bypass takes precedence, including DNS from the direct
+        # resolver. Ordinary DNS still goes to Proton below.
+        meta skgid ${toString gidNovpn} meta mark set ${toString markDirect} return
         udp dport 53 return
         tcp dport 53 return
 
@@ -157,9 +173,14 @@ in
 
         ip  daddr @sc_v4 meta mark set ${toString markSc}
         ip6 daddr @sc_v6 meta mark set ${toString markSc}
+      }
 
-        # Apps in the `novpn` group go DIRECT -- last, so it overrides the above.
-        meta skgid ${toString gidNovpn} meta mark set ${toString markDirect}
+      chain direct_dns {
+        type nat hook output priority dstnat; policy accept;
+        # Only redirect requests to the system's loopback resolver. Explicit
+        # external DNS servers remain usable, and upstream queries cannot loop.
+        meta skgid ${toString gidNovpn} ip daddr 127.0.0.1 meta l4proto { tcp, udp } th dport 53 counter redirect to :${toString directDnsPort}
+        meta skgid ${toString gidNovpn} ip6 daddr ::1 meta l4proto { tcp, udp } th dport 53 counter redirect to :${toString directDnsPort}
       }
 
       chain srcnat {
@@ -168,8 +189,9 @@ in
         # connect-time, BEFORE the mark reroutes them to the physical link -- so
         # they'd leave with a martian source and get dropped (UDP/IPv4 especially;
         # TCP slipped by over IPv6). Masquerade to the real physical IP; conntrack
-        # restores the reply. v6 already gets a real source, so v4 only.
-        meta nfproto ipv4 meta mark ${toString markDirect} masquerade
+        # restores the reply. Exclude loopback DNS; it needs no source NAT.
+        # v6 already gets a real source, so v4 only.
+        oifname != "lo" meta nfproto ipv4 meta mark ${toString markDirect} masquerade
       }
     '';
   };
@@ -261,6 +283,26 @@ in
     "CAP_NET_BIND_SERVICE"
   ];
 
+  # Independent of wg-quick and the Proton resolver: direct DNS must continue
+  # working when WireGuard is blocked. This unprivileged instance only listens
+  # on loopback, and its novpn group sends upstream queries over the main route.
+  systemd.services.dnsmasq-direct = {
+    description = "Direct DNS via the current network (novpn applications)";
+    wantedBy = [ "multi-user.target" ];
+    wants = [ "NetworkManager.service" ];
+    after = [ "NetworkManager.service" "nftables.service" ];
+    serviceConfig = {
+      Type = "simple";
+      DynamicUser = true;
+      Group = bypassGroup;
+      ExecStart = "${pkgs.dnsmasq}/bin/dnsmasq --keep-in-foreground --conf-file=${directDnsConfig}";
+      Restart = "on-failure";
+      ProtectHome = true;
+      ProtectSystem = "strict";
+      PrivateTmp = true;
+    };
+  };
+
   # ---- direct (VPN-bypass) group + membership --------------------------------
   # Sockets created under group `novpn` are marked (see the nft chain) and routed
   # out the physical link. NOTE: log out/in after the first rebuild so your shell
@@ -300,7 +342,13 @@ in
     # `sg` keeps your uid + supplementary groups; GPU/audio access is by logind
     # seat ACL, not group, so it is unaffected.
     (pkgs.writeShellScriptBin "direct" ''
-      exec sg ${bypassGroup} -c "$*"
+      if [ "$#" -eq 0 ]; then
+        echo "usage: direct COMMAND [ARG...]" >&2
+        exit 2
+      fi
+      # sg accepts a shell command; quote each argument to preserve argv.
+      printf -v command '%q ' "$@"
+      exec /run/wrappers/bin/sg ${bypassGroup} -c "exec $command"
     '')
   ];
 }
