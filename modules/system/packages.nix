@@ -16,6 +16,8 @@
     gh # GitHub CLI
     gnupg
     waypipe # Forward Wayland applications over SSH.
+    tmux
+    zellij
 
     # System monitors
     fastfetch
