@@ -35,6 +35,9 @@
     ../../modules/system/seaweedfs.nix
     ../../modules/system/sccache.nix
     ../../modules/system/embedded-dev.nix
+    ../../modules/system/packages.nix
+    ../../modules/system/guest.nix
+    ../../modules/system/cloudflared-tunnel.nix
   ];
 
   # --- Overlays: CachyOS kernel (pinned -> max attic cache hits), niri, vicinae ---

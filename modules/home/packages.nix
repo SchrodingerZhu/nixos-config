@@ -1,14 +1,9 @@
-# General userland packages (not tied to a specific app module).
+# Per-user GUI applications. CLI/TUI tools live in modules/system/packages.nix.
 #
 # Persistence note: these are declared in the flake, so they rebuild into /nix
 # (a persistent dataset) on every switch. Any runtime data they create lives
 # under $HOME (the safe/home dataset) and survives the ephemeral-root wipe with
 # no extra environment.persistence entries.
-#
-# distrobox is just the CLI wrapper -- its container backend (rootless podman)
-# and the sub-uid/gid ranges are configured at the system level
-# (see the host's default.nix). steam is likewise enabled there via
-# programs.steam, NOT here, so it gets the FHS env + controller udev rules.
 { pkgs, lib, osConfig, ... }:
 let
   # The workstation runs everything through a ProtonVPN tunnel (modules/system/
@@ -43,16 +38,11 @@ let
   maybeDirect = pkg: exe: if hasNovpn then directWrap pkg exe else pkg;
 in
 {
+  # GUI apps are per-user; CLI/TUI tools are system-wide
+  # (modules/system/packages.nix) so the guest account gets them too.
   home.packages = with pkgs; [
-    python3
-    distrobox
-    claude-code
-    codex
     chatgpt # ChatGPT desktop client (Linux build from llm-agents.nix).
-    bubblewrap # Provides bwrap for the ChatGPT sandbox.
     vscode # Insiders isn't packaged in nixpkgs; using stable.
-    gh # GitHub CLI
-    gnupg
     obs-studio # screen capture via the gnome ScreenCast portal (see xdg.portal)
     (maybeDirect taterclient-ddnet "TaterClient-DDNet") # DDNet -- DIRECT under VPN (UDP breaks tunnelled)
     telegram-desktop
@@ -61,22 +51,11 @@ in
     teams-for-linux # Microsoft Teams (official Linux client is discontinued)
 
     # Desktop utilities
-    waypipe # Forward Wayland applications over SSH.
     cosmic-files
     cosmic-edit
     cosmic-player
     cosmic-reader
     loupe # GNOME image viewer; Noctua is not packaged in our nixpkgs pin.
-
-    # System monitors
     cosmic-monitor
-    fastfetch
-    btop
-    htop
-    nvtopPackages.amd # AMD Radeon 8060S (RDNA 3.5) iGPU
-
-    # Dev tools (direnv itself is configured in direnv.nix)
-    texliveFull # full TeX Live (all packages) -- several GB
-    ripgrep
   ];
 }
