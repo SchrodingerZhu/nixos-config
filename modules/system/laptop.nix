@@ -28,13 +28,13 @@ let
   '';
 in
 {
-  # --- eDP stability: disable panel power-saving in amdgpu DC --------------
-  # The Z13 panel wedges in the PSR / idle-screen-management path (WARNING at
-  # mod_power_set_psr_event via dm_ism_commit_idle_optimization_state, panel
-  # stops updating until reboot; seen on 7.2.0-cachyos with and without any
-  # DDC experiments). Disable the involved features:
-  #   0x010 PSR | 0x200 PSR-SU | 0x400 Panel Replay | 0x800 IPS  = 0xE10
-  # Costs some battery; remove bits once a kernel fixes the ISM path.
+  # --- eDP stability: amdgpu display workarounds ---------------------------
+  # Brief stripes flash across the panel on window switches; they stop when
+  # the GPU clocks are pinned high. Following the GZ302 community
+  # recommendation for APU display artifacts:
+  #   dcdebugmask 0x200 PSR-SU | 0x400 Panel Replay  = 0x600
+  #   sg_display=0  scan out from VRAM instead of GTT
+  #   abmlevel=0    disable adaptive backlight management
   #
   # pcie_port_pm=off: poweroff hangs in thunderbolt nhi_pci_remove whenever
   # the TB3 monitor (LG UltraFine) was enumerated during the session — even
@@ -42,7 +42,9 @@ in
   # port power management; disabling it is the documented workaround. Reboots
   # were unaffected; only ACPI S5 wedged. Small idle-power cost.
   boot.kernelParams = [
-    "amdgpu.dcdebugmask=0xE10"
+    "amdgpu.dcdebugmask=0x600"
+    "amdgpu.sg_display=0"
+    "amdgpu.abmlevel=0"
     "pcie_port_pm=off"
   ];
 
