@@ -12,6 +12,7 @@
     distrobox
     claude-code
     codex
+    antigravity-cli
     bubblewrap # bwrap for the codex and ChatGPT sandboxes
     gh # GitHub CLI
     gnupg
