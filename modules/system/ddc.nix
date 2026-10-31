@@ -15,22 +15,6 @@
         else
           prev.ddcutil;
 
-      # Upstream snapshot includes the September 18 DCN 3.5.1 DMCUB update.
-      # Return to Nixpkgs once its firmware release reaches this snapshot date.
-      linux-firmware =
-        if lib.versionOlder prev.linux-firmware.version "20261002" then
-          prev.linux-firmware.overrideAttrs (_: {
-            version = "20261002-unstable";
-            src = final.fetchFromGitLab {
-              owner = "kernel-firmware";
-              repo = "linux-firmware";
-              rev = "d947e4e8e314e9254a1242dc1a5d9cede2cce33d";
-              hash = "sha256-NA14ixKXzmg68RmXvyEXaUPt2MzytvnigfPVIkh/J0g=";
-            };
-          })
-        else
-          prev.linux-firmware;
-
       lg-brightness = final.callPackage ../../packages/lg-brightness.nix { };
     })
   ];

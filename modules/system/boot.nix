@@ -9,10 +9,6 @@
   boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.efi.efiSysMountPoint = "/boot";
 
-  # systemd in initrd: ZFS passphrase prompt + impermanence rollback run as
-  # proper systemd units in early boot.
-  boot.initrd.systemd.enable = true;
-
   # AMD (Ryzen 9950X workstation / Ryzen AI Max+ 395 laptop): active pstate
   # (EPP governor) + microcode updates. Shared -- both hosts are AMD.
   boot.kernelParams = [ "amd_pstate=active" ];
