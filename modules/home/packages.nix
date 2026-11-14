@@ -36,6 +36,19 @@ let
 
   # Wrap only where the VPN (and thus the novpn group) exists; plain otherwise.
   maybeDirect = pkg: exe: if hasNovpn then directWrap pkg exe else pkg;
+
+  # Electron picks its secret store from XDG_CURRENT_DESKTOP and doesn't know
+  # niri, so it would fall back to plaintext storage. Point it at the Secret
+  # Service, which KeePassXC provides (modules/home/keepassxc.nix).
+  claude-desktop = pkgs.symlinkJoin {
+    name = "claude-desktop";
+    paths = [ pkgs.claude-desktop ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/claude-desktop \
+        --add-flags "--password-store=gnome-libsecret"
+    '';
+  };
 in
 {
   # GUI apps are per-user; CLI/TUI tools are system-wide
