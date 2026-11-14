@@ -7,13 +7,13 @@
 }:
 rustPlatform.buildRustPackage {
   pname = "lg-brightness";
-  version = "0.1.0-unstable-2026-07-10";
+  version = "0.1.0-unstable-2026-09-30";
 
   src = fetchFromGitHub {
     owner = "ckunte";
     repo = "lg-brightness";
-    rev = "6a33e6663e4981038631219e75a65eb5bb37b75d";
-    hash = "sha256-aWvHzBkpbnKHgSmdp265l2c/O1rQYtorxQmHyuYPS0U=";
+    rev = "a49b53250315081998ea490d57d47d3a5cb64594";
+    hash = "sha256-Ziz1IWpd302k5/zTAyN6UemqNJxJncMw6kG5o+R1bTY=";
   };
   cargoHash = "sha256-KcBAqhYGCfgGdBX/57bICy8PFDy4S5NOTbZvvqt+IaY=";
 

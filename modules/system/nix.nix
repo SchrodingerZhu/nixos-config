@@ -30,7 +30,7 @@ in
       "https://attic.xuyh0120.win/lantian" # CachyOS kernel + zfs_cachyos
       "https://niri.cachix.org" # niri
       "https://vicinae.cachix.org" # vicinae launcher
-      "https://cache.numtide.com" # claude-code, codex (numtide/llm-agents.nix)
+      "https://cache.numtide.com" # claude-code, claude-desktop, codex (numtide/llm-agents.nix)
     ];
     trusted-public-keys = [
       "rustfs-nix-1:vljOeYpwlqy6/6YgzAJANzN0DzXNCXbCYtOcWNNMxs8=" # LAN SeaweedFS cache

@@ -1,20 +1,8 @@
 # External display brightness controls.
-{ pkgs, lib, ... }:
+{ pkgs, ... }:
 {
   nixpkgs.overlays = [
     (final: prev: {
-      ddcutil =
-        if lib.versionOlder prev.ddcutil.version "3.0.1" then
-          prev.ddcutil.overrideAttrs (_: {
-            version = "3.0.1";
-            src = final.fetchurl {
-              url = "https://www.ddcutil.com/tarballs/ddcutil-3.0.1.tar.gz";
-              hash = "sha256-HIYtwmOqKV8j2o2aZpNIfUzYyXqRveqkcRyrKKM83W4=";
-            };
-          })
-        else
-          prev.ddcutil;
-
       lg-brightness = final.callPackage ../../packages/lg-brightness.nix { };
     })
   ];

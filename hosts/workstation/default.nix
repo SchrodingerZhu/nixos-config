@@ -36,6 +36,7 @@
     ../../modules/system/sccache.nix
     ../../modules/system/embedded-dev.nix
     ../../modules/system/packages.nix
+    ../../modules/system/claude-desktop.nix
     ../../modules/system/guest.nix
     ../../modules/system/cloudflared-tunnel.nix
   ];
@@ -45,12 +46,13 @@
     inputs.nix-cachyos-kernel.overlays.pinned
     inputs.niri.overlays.niri
     inputs.vicinae.overlays.default
-    # claude-code / codex / chatgpt from numtide/llm-agents.nix (cached).
+    # claude-code / claude-desktop / codex / chatgpt from numtide/llm-agents.nix (cached).
     # Taken from its packages output, not overlays.shared-nixpkgs, so the
     # binaries match what numtide's CI pushed to cache.numtide.com.
     (final: prev: {
       inherit (inputs.llm-agents.packages.${prev.stdenv.hostPlatform.system})
         claude-code
+        claude-desktop
         codex
         chatgpt
         ;

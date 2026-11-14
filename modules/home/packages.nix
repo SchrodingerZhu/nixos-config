@@ -42,6 +42,7 @@ in
   # (modules/system/packages.nix) so the guest account gets them too.
   home.packages = with pkgs; [
     chatgpt # ChatGPT desktop client (Linux build from llm-agents.nix).
+    claude-desktop # Claude desktop client (llm-agents.nix); Cowork deps in modules/system/claude-desktop.nix.
     vscode # Insiders isn't packaged in nixpkgs; using stable.
     obs-studio # screen capture via the gnome ScreenCast portal (see xdg.portal)
     (maybeDirect taterclient-ddnet "TaterClient-DDNet") # DDNet -- DIRECT under VPN (UDP breaks tunnelled)

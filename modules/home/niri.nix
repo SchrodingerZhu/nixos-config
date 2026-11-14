@@ -45,6 +45,10 @@ in
   programs.niri.package = pkgs.niri-unstable;
 
   programs.niri.settings = {
+    # niri-flake now defaults this to null (unset); DMS's niri module reads it
+    # as a Boolean. false is niri's own default and niri-flake's old one.
+    layout.border.enable = false;
+
     prefer-no-csd = true;
 
     spawn-at-startup = [
