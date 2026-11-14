@@ -268,7 +268,7 @@ in
       # Resolution itself still rides the tunnel; only the payload goes direct.
       nftset = [
         "/github.com/githubusercontent.com/ghcr.io/4#inet#split-tunnel#direct_v4,6#inet#split-tunnel#direct_v6"
-        "/nixos.org/cachix.org/attic.xuyh0120.win/4#inet#split-tunnel#direct_v4,6#inet#split-tunnel#direct_v6"
+        "/nixos.org/cachix.org/cache.lantian.pub/4#inet#split-tunnel#direct_v4,6#inet#split-tunnel#direct_v6"
         "/crates.io/rust-lang.org/4#inet#split-tunnel#direct_v4,6#inet#split-tunnel#direct_v6"
         "/pypi.org/pythonhosted.org/4#inet#split-tunnel#direct_v4,6#inet#split-tunnel#direct_v6"
         # geoclue's IP-fallback geolocation must see the REAL egress IP or

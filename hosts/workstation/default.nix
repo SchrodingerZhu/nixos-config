@@ -41,7 +41,7 @@
     ../../modules/system/cloudflared-tunnel.nix
   ];
 
-  # --- Overlays: CachyOS kernel (pinned -> max attic cache hits), niri, vicinae ---
+  # --- Overlays: CachyOS kernel (pinned -> max binary cache hits), niri, vicinae ---
   nixpkgs.overlays = [
     inputs.nix-cachyos-kernel.overlays.pinned
     inputs.niri.overlays.niri

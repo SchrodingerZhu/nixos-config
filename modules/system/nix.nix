@@ -27,7 +27,7 @@ in
       # Prefer the LAN cache, with public caches as fallbacks.
       "${nixCacheUrl}&priority=30"
       "https://cache.nixos.org"
-      "https://attic.xuyh0120.win/lantian" # CachyOS kernel + zfs_cachyos
+      "https://cache.lantian.pub/lantian" # CachyOS kernel + zfs_cachyos
       "https://niri.cachix.org" # niri
       "https://vicinae.cachix.org" # vicinae launcher
       "https://cache.numtide.com" # claude-code, claude-desktop, codex (numtide/llm-agents.nix)
@@ -35,7 +35,7 @@ in
     trusted-public-keys = [
       "rustfs-nix-1:vljOeYpwlqy6/6YgzAJANzN0DzXNCXbCYtOcWNNMxs8=" # LAN SeaweedFS cache
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-      "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc="
+      "lantian:WVGO7vsRMSEN+h7Lp7kv6SAmrkEXgUGbbXm7jMDjBuQ="
       "niri.cachix.org-1:Wv0OmO7PsuocRKzfDoJ3mulSl7Z6oezYhGhR+3W2964="
       "vicinae.cachix.org-1:1kDrfienkGHPYbkpNj1mWTr7Fm1+zcenzgTizIcI3oc="
       "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
