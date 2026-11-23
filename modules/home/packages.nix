@@ -64,6 +64,11 @@ in
     (maybeDirect vesktop "vesktop") # Discord -- DIRECT under VPN (voice breaks tunnelled)
     teams-for-linux # Microsoft Teams (official Linux client is discontinued)
 
+    # Office suites: LibreOffice for ODF and the full toolset, ONLYOFFICE for
+    # round-tripping OOXML with Microsoft Office users.
+    libreoffice-fresh
+    onlyoffice-desktopeditors
+
     # Desktop utilities
     cosmic-files
     cosmic-edit
