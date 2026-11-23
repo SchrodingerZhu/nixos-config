@@ -100,7 +100,7 @@
   programs.niri.package = pkgs.niri-unstable;
 
   # DankGreeter (in-tree nixpkgs module) running under niri.
-  services.displayManager.dms-greeter = {
+  services.displayManager.dux-greeter = {
     enable = true;
     compositor.name = "niri";
 

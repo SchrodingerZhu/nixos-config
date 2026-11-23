@@ -66,7 +66,7 @@ in
 
     # Office suites: LibreOffice for ODF and the full toolset, ONLYOFFICE for
     # round-tripping OOXML with Microsoft Office users.
-    libreoffice-fresh
+    libreoffice
     onlyoffice-desktopeditors
 
     # Desktop utilities

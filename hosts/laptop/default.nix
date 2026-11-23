@@ -85,7 +85,7 @@
   programs.niri.package = pkgs.niri-unstable;
 
   # DankGreeter under niri.
-  services.displayManager.dms-greeter = {
+  services.displayManager.dux-greeter = {
     enable = true;
     compositor.name = "niri";
     compositor.customConfig = ''
