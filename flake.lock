@@ -1,5 +1,26 @@
 {
   "nodes": {
+    "agentic-writing-mcp": {
+      "inputs": {
+        "nix-gl-host": "nix-gl-host",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795749293,
+        "narHash": "sha256-nhBdl7/oktPhH7TIsWD6hBPcmR80L+4EcAFiFUtXdfU=",
+        "owner": "SchrodingerZhu",
+        "repo": "agentic-writing-mcp",
+        "rev": "516a35005b1460a949b439a7523e632181c7a57f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "SchrodingerZhu",
+        "repo": "agentic-writing-mcp",
+        "type": "github"
+      }
+    },
     "bilibili-streamer": {
       "inputs": {
         "nixpkgs": [
@@ -365,6 +386,27 @@
         "type": "github"
       }
     },
+    "nix-gl-host": {
+      "inputs": {
+        "nixpkgs": [
+          "agentic-writing-mcp",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1732211616,
+        "narHash": "sha256-QZCKJoypcwgS3tDNSWMjlxEBZtOYPW3eXV24rMzKsac=",
+        "owner": "numtide",
+        "repo": "nix-gl-host",
+        "rev": "5269b233f83880a0b433eafe026f0bc0d8f1a4a9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "nix-gl-host",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1768564909,
@@ -532,6 +574,7 @@
     },
     "root": {
       "inputs": {
+        "agentic-writing-mcp": "agentic-writing-mcp",
         "bilibili-streamer": "bilibili-streamer",
         "disko": "disko",
         "dms": "dms",

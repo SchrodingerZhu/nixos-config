@@ -49,6 +49,13 @@
     # source). Consumed via a small overlay in both hosts' default.nix.
     llm-agents.url = "github:numtide/llm-agents.nix";
 
+    # Writing-quality checks for coding agents (server, workers, MCP), and the
+    # WireGuard network between the cluster hosts.
+    agentic-writing-mcp = {
+      url = "github:SchrodingerZhu/agentic-writing-mcp";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Zen Browser (community flake), Twilight channel.
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";

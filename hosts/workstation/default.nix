@@ -38,6 +38,7 @@
     ../../modules/system/packages.nix
     ../../modules/system/claude-desktop.nix
     ../../modules/system/guest.nix
+    ../../modules/system/agentic-writing.nix
     ../../modules/system/cloudflared-tunnel.nix
   ];
 
