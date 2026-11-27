@@ -8,11 +8,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795755025,
-        "narHash": "sha256-DpA0oAMeYN9hFyY488wC+dkHsR4oUDujqiNHBnQ9Rgg=",
+        "lastModified": 1795758196,
+        "narHash": "sha256-jWPSo0rmUCMweoGH0ah3Q/9s35f7AJz3T4GvzDJDFUE=",
         "owner": "SchrodingerZhu",
         "repo": "agentic-writing-mcp",
-        "rev": "f3c9605fd4b69214bf9ad43e8d4ac36c7430e09b",
+        "rev": "b687d1046534228879528a116b2b1006c61e036a",
         "type": "github"
       },
       "original": {
